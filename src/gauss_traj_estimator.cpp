@@ -27,7 +27,7 @@ void GaussTrajEstimator::spin() {
     while(ros::ok()) {
         ros::spinOnce();
         if(lost_track) {
-
+            // Switch to target tracking prediction mode
         }
         r.sleep();
     }

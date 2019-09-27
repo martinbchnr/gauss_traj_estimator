@@ -19,13 +19,9 @@ class GaussTrajEstimator {
     public:
 		GaussTrajEstimator();
 		~GaussTrajEstimator();
-		void posCallBack_1(const geometry_msgs::PoseWithCovarianceStamped msg);
+		void targetPosCallback(const geometry_msgs::PoseWithCovarianceStamped msg);
 		void SubscribeToTopics();
-		void PublishAllocatedTasks();
-		std::vector<std::pair<double,double>> convert_goal_list_to_vector_pair(const goal_list::GoalObjectList pos_array);
-		geometry_msgs::PoseArray convert_vector_pair_to_ros_array(const std::vector<std::pair<double,double>> vector);
-
+		void PublishPredictions();
 		void spin();
-
 }
 
