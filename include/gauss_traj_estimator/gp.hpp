@@ -1,8 +1,13 @@
-#ifndef _GAUSSIAN_PROCESS
-#define _GAUSSIAN_PROCESS
-
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
 #include <functional>
+#include <random>
 #include <vector>
+#include <string>
+
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
 
 /*
  TODO: Provide a nice description of GPs

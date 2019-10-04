@@ -1,13 +1,32 @@
 #include <functional>
 #include <numeric>
 #include <vector>
-
 #include <./../include/gauss_traj_estimator/gp.hpp>
 
 using namespace std;
 typedef unsigned int uint;
 
+#define EPS 1e-5
+
 GP::GP(function<double(double)> m, function<double(double, double)> k, double sigma) : m(m), k(k), sigma(sigma), n(0) { } 
+
+
+// Define data matrix that holds data vectors
+Eigen::MatrixXd X; 
+
+// function to compute the covariance of data matrices: k(X,X) or k(x)
+Eigen::MatrixXd Sigma(Eigen::MatrixXd X) const 
+{
+    int N_cols = X.cols();
+    Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
+    Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
+    Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
+}
+// code for squared exponential kernel function
+
+
+
+
 
 void GP::push(double x, double y)
 {	
