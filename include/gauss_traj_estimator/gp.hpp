@@ -5,15 +5,11 @@
 #include <random>
 #include <vector>
 #include <string>
+#include <numeric>
 
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
 
-/*
- TODO: Provide a nice description of GPs
- TODO: Allow multidimensional inputs
- TODO: Hyperparameter optimisation
-*/
 
 class GP
 {
@@ -22,14 +18,14 @@ private:
 	std::function<double(double)> m;
 	std::function<double(double, double)> k;
 
-	// Assumed noise hyperparameter
-	double sigma;
+	// NOISE PARAMETER
+	double sigma_omega;
 
-	// number of inputs currently conditioning the posterior
-	int n;
-
-	// current training set
-	std::vector<double> xt, yt;
+	// TRAINING DATA
+	// Define data matrix that holds position vectors
+	Eigen::MatrixXd X;
+	// Define data matrix that holds the times 
+	Eigen::VectorXd T:
 
 	// current inverse gram matrix
 	std::vector<std::vector<double>> L;
@@ -37,9 +33,6 @@ private:
 public:
 	// Create a new GP with given mean and covariance function, and noise parameter
 	GP(std::function<double(double)> m, std::function<double(double, double)> k, double sigma);
-
-	// Condition the GP on a new example (x, y)
-	void push(double x, double y);
 
 	// Get the mean values at given points
 	std::vector<double> get_means(std::vector<double> xs);
