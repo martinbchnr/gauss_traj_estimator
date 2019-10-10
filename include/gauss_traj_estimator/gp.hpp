@@ -15,30 +15,29 @@ class GP
 {
 private:
 	// mean and covariance functions
-	std::function<double(double)> m;
-	std::function<double(double, double)> k;
+	// std::function<double(double)> m;
+	// std::function<double(double, double)> k;
 
 	// NOISE PARAMETER
-	double sigma_omega;
+	double sigma_omega = 0.75;
 
 	// TRAINING DATA
-	// Define data matrix that holds position vectors
-	Eigen::MatrixXd X;
-	// Define data matrix that holds the times 
-	Eigen::VectorXd T:
-
-	// current inverse gram matrix
-	std::vector<std::vector<double>> L;
+	// Define data matrix that holds location data
+	Eigen::MatrixXd X_train;
+	// Define data matrix that holds the train time data
+	Eigen::VectorXd t_train;
+	// Define data matrix that holds the test time data
+	Eigen::VectorXd t_test;
 
 public:
 	// Create a new GP with given mean and covariance function, and noise parameter
-	GP(std::function<double(double)> m, std::function<double(double, double)> k, double sigma);
+	//GP(std::function<double(double)> m, std::function<double(double, double)> k, double sigma);
 
 	// Get the mean values at given points
-	std::vector<double> get_means(std::vector<double> xs);
+	Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train);
 
 	// Get the covariances at all pairs of given points
-	std::vector<std::vector<double>> get_covar(std::vector<double> xs);
+	Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train)
 };
 
 #endif

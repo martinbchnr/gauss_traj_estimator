@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include <gauss_multi.h>
+#include <gaussian.hpp>
 #include <gp.h>
 
 using namespace std;
@@ -26,19 +26,32 @@ int main()
 	auto k = [](double x, double y) { return exp(-(x - y) * (x - y) / (2.0 * 0.75 * 0.75)); };
 	GP gp(m, k, 0.0);
 
-	// Condition it on two points
-	gp.push(-3.0, 4.0);
-	gp.push(2.0, -3.0);
+	// Create train location data
+	Eigen::MatrixXd X_train(5,2);
+  	X_train << 	0.0, 0.0,
+				1.0, 1.5,
+				2.0, 2.0,
+				2.5, 1.5,
+				3.0, 4.5;
 
-	// points to be used to plot lines
-	vector<double> xs;
-	for (double x=-5.0;x<=5.0;x+=0.01) xs.push_back(x);
+	// Create train time data
+	Eigen::VectorXd t_train(5);
+  	t_train << 	0.0, 
+	  			1.5,
+				4.0, 
+				7.5,
+				9.0;
+
+	
+	t_test = Eigen::VectorXd::LinSpaced(30,0.0,15.0);
 
 	// Sample the prior
-	vector<double> mu = gp.get_means(xs);
-	vector<vector<double>> Sigma = gp.get_covar(xs);
+	Eigen::VectorXd mu = gp.pred_mean(t_train, t_test, X_train);
+	Eigen::MatrixXd Sigma = gp.get_(xs);
 
 	MultiGaussian N(gen, mu, Sigma);
+
+	MultiVarGaussian gp_gaussian(mean_sample, sigma_sample);
 
 	vector<vector<double>> Xs(n_samp, xs);
 	vector<vector<double>> Ys(n_samp);
