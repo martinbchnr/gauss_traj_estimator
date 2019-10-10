@@ -1,19 +1,18 @@
 #include <functional>
 #include <numeric>
 #include <vector>
-#include <./../include/gauss_traj_estimator/gp.hpp>
-#include <gaussian.hpp>
+#include "./../include/gp.hpp"
+#include "./../include/gaussian.hpp"
 
 using namespace std;
 typedef unsigned int uint;
 
 #define EPS 1e-5
 
+/* 
 GP::GP(function<double(double)> m, function<double(double, double)> k, double sigma) : m(m), k(k), sigma(sigma), n(0) {
-
-
-
-} 
+}  
+*/
 
 
 /* 

@@ -40,4 +40,3 @@ public:
 	Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train)
 };
 
-#endif
