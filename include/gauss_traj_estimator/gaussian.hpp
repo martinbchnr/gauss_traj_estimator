@@ -24,4 +24,3 @@ public:
 	Eigen::VectorXd sample();
 };
 
-#endif

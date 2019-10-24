@@ -1,11 +1,10 @@
-#include <functional>
-#include <numeric>
-#include <vector>
-#include "./../include/gp.hpp"
-#include "./../include/gaussian.hpp"
+#include "./../include/gauss_traj_estimator/gp.hpp"
+#include "./../include/gauss_traj_estimator/gaussian.hpp"
+
+
+typedef unsigned int uint;
 
 using namespace std;
-typedef unsigned int uint;
 
 #define EPS 1e-5
 
@@ -23,8 +22,9 @@ Eigen::MatrixXd compute_cov_T(Eigen::MatrixXd X) const
     Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
     Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
     Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
-	I = Eigen::MatrixXd::Identity();
-	Eigen::MatrixXd Cov_T = Sigma_X + std::pow(sigma_omega,2) * I;
+	Eigen::MatrixXd I;
+	I.setIdentity(N,N);
+	Eigen::MatrixXd Cov_T = Sigma_X + pow(sigma_omega,2) * I;
 	return Cov_T;
 } */
 
@@ -37,43 +37,55 @@ Eigen::MatrixXd compute_kernel(Eigen::MatrixXd X, Eigen::VectorXd x_new) const
     Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
     Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
     Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
-	I = Eigen::MatrixXd::Identity();
-	Eigen::MatrixXd Cov_T = Sigma_X + std::pow(sigma_omega,2) * I;
+	Eigen::MatrixXd I;
+	I.setIdentity(N,N);
+	Eigen::MatrixXd Cov_T = Sigma_X + pow(sigma_omega,2) * I;
 	return Cov_T;
 }
- */
+*/
 
-
+/* 
 // accepted
-std::double kernel(Eigen::VectorXd x_n, Eigen::VectorXd x_m) {
+double kernel(Eigen::VectorXd x_n, Eigen::VectorXd x_m) {
 	
-	std::double g_SE = 1;
-	std::double l_SE = 2;
-	std::double squared_distance = (x_n.tranpose() * x_n) + (x_m.tranpose() * x_m) - (x_n.tranpose() * x_m);
-	std::double kernel = std::pow(g_SE, 2) * std::exp((-squared_distance)/(2*std::pow(l_SE,2)));
+	double g_SE = 1;
+	double l_SE = 2;
+	double squared_distance = (x_n.transpose() * x_n) + (x_m.transpose() * x_m) - (x_n.transpose() * x_m);
+	double kernel = pow(g_SE, 2) * exp((-squared_distance)/(2*pow(l_SE,2)));
+	return kernel;
+}
+ */
+double scalar_kernel(double x_1, double x_2) {
+	
+	double g_SE = 1;
+	double l_SE = 10;
+	double squared_distance = pow((x_1-x_2),2);
+	double kernel = pow(g_SE, 2) * exp((-squared_distance)/(2*pow(l_SE,2)));
 	return kernel;
 }
 
 
+
+/* 
 // accepted
-Eigen::Matrix Xd kernel_cov_matrix(Eigen::MatrixXd X) {
+Eigen::MatrixXd kernel_cov_matrix(Eigen::MatrixXd X) {
 
 	uint D = X.cols();
 	uint N = X.rows();
 	// accept only NxD sized data matrices
 	Eigen::MatrixXd kernel_matrix(N,N);
 
-	for (i=0; i<N; i++) {
-		for (j=0; j<N; j++) {
+	for (uint i=0; i<N; i++) {
+		for (int j=0; j<N; j++) {
 			kernel_matrix(i,j) = kernel(X.row(i),X.row(j));
 		}	
 	}
 	return kernel_matrix;
 }
+ */
 
-
-// accepted
-Eigen::Matrix Xd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x_new) {
+/* 
+Eigen::MatrixXd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x_new) {
 
 	// See Bishop Eq. (6.65)
 	uint D = X.cols();
@@ -82,15 +94,15 @@ Eigen::Matrix Xd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd 
 	Eigen::MatrixXd kernel_matrix(N+1,N+1);
 	Eigen::VectorXd augm_vector(N);
 
-	Eigen::Matrix Xd learning_data_cov(N,N);
+	Eigen::MatrixXd learning_data_cov(N,N);
 	learning_data_cov = kernel_cov_matrix(X);
 
-	for (i=0; i<N; i++) {
+	for (int i=0; i<N; i++) {
 		augm_vector(i) = kernel(X.row(i),x_new);
 	}
 
 	Eigen::VectorXd augm_scalar(1);
-	augm_scalar = kernel(X_new,x_new);
+	augm_scalar = kernel(x_new,x_new);
 
 	// concatenate all three computed kernels/kernel matrices
 	Eigen::MatrixXd upper_half(learning_data_cov.rows(), learning_data_cov.cols()+augm_vector.cols());
@@ -105,60 +117,80 @@ Eigen::Matrix Xd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd 
 
 	return full_kernel_matrix;
 }
+ */
+
 
 // accepted
-Eigen::Matrix Xd time_kernel(Eigen::VectorXd t_train, Eigen::VectorXd t_test) {
+Eigen::MatrixXd time_kernel(Eigen::VectorXd t_a, Eigen::VectorXd t_b) {
 
 	// See Bishop Eq. (6.65)
-	uint N = t_train.rows();
-	uint T = t_test.rows();
+	uint dim_a = t_a.rows();
+	uint dim_b = t_b.rows();
 
 	// accept only NxD sized data matrices
-	Eigen::MatrixXd kernel_matrix(N,T);
+	Eigen::MatrixXd kernel_matrix(dim_a,dim_b);
 
-	Eigen::Vector1d t_train_point(1);
-	Eigen::Vector1d t_test_point(1);
-
-	for (i=0; i<N; i++) {
-		for (j=0; j<T; j++) {
-			t_train_point(0) = t_train.row(i);
-			t_test_point(0) = t_test.row(j);
-
-			kernel_matrix(i,j) = kernel(t_train_point,t_test_point);
+	for (uint i=0; i<dim_a; i++) {
+		for (uint j=0; j<dim_b; j++) {
+			kernel_matrix(i,j) = scalar_kernel(t_a(i),t_b(j));
 		}	
 	}
-	return matrix; // dim: NxT
+	return kernel_matrix; // dim: NxT
 }
 
 
 
 
-// Function to compute mean of y* for new data input x* (time)
-Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) const 
-{
-	Eigen::MatrixXd k;
-	I = Eigen::MatrixXd::Identity(N,N);
-    
-	K_train_test = time_kernel(t_train,t_test);
-	C_N = time_kernel(t_train, t_train) + std::pow(sigma_omega,2) * I;
 
-	Eigen::MatrixXd mean = k.tranpose() * C_N.inverse() * X_train; 
+// COMPUTE EQ 11
+// Function to compute mean of y* for new data input x* (time)
+Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) 
+{
+	uint N = t_train.rows();
+	Eigen::MatrixXd k_t_test_train;
+	Eigen::MatrixXd k_t_test_train_transpose;
+	Eigen::MatrixXd K_t_train;
+	Eigen::MatrixXd K_t_train_inv;
+	Eigen::MatrixXd mean;
+	Eigen::MatrixXd I;
+	I.setIdentity(N,N);
+	double sigma_omega = 0.01;
+    
+	k_t_test_train = time_kernel(t_test,t_train);
+	k_t_test_train_transpose = k_t_test_train.transpose().eval();
+	cout << "pred_mean ---------------" << endl;
+	cout << k_t_test_train << endl;
+
+
+	K_t_train = time_kernel(t_train, t_train) + pow(sigma_omega,2) * I;
+	K_t_train_inv = K_t_train.inverse();
+	cout << K_t_train_inv << endl;
+	mean = k_t_test_train * K_t_train_inv * X_train; 
+	cout << mean.col(0) << endl;
+	//
 	//(TxN)(NxN)(NxD) = (TxD)
 	return mean;
 }
 
-
+// COMPUTE EQ 12
 // Function to compute the variance of t* for new data input x*
-Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) const 
+Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) 
 {
-	Eigen::VectorXd k;
-	I = Eigen::MatrixXd::Identity(N,N);
-    
-	K_test = time_kernel(t_test,t_test);
-	K_train_test = time_kernel(t_train,t_test);
-	C_N = time_kernel(t_train,t_train) + std::pow(sigma_omega,2) * I;
+	uint N = t_train.rows();
+	Eigen::MatrixXd K_test;
+	Eigen::MatrixXd K_train_test;
+	Eigen::MatrixXd C_N;
+	Eigen::MatrixXd I;
+	I.setIdentity(N,N);
+	double sigma_omega = 2.25;
 
-	Eigen::MatrixXd var = K_test - K_train_test.tranpose() * C_N.inverse() * K_train_test;
+	K_test = time_kernel(t_test,t_test);
+
+	K_train_test = time_kernel(t_train,t_test);
+	C_N = time_kernel(t_train,t_train) + pow(sigma_omega,2) * I;
+
+	Eigen::MatrixXd var;
+	var = K_test - K_train_test.transpose() * C_N.inverse() * K_train_test;
 	// (TxT)-(TxN)(NxN)(NxT)
 	return var;
 }
@@ -166,13 +198,24 @@ Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen:
 
 int main()
 {
+	// SCALAR KERNEL SEEMS TO WORK
+	double scalar_output = scalar_kernel(0.5, 3.1);
+	cout << scalar_output << endl;
+
 	// Create train location data
-	Eigen::MatrixXd X_train(5,2);
-  	X_train << 	0.0, 0.0,
-				1.0, 1.5,
-				2.0, 2.0,
-				2.5, 1.5,
-				3.0, 4.5;
+	Eigen::MatrixXd X_train_x(5,1);
+  	X_train_x << 	0.0,
+				1.0,
+				2.0,
+				2.5,
+				3.0;
+
+	Eigen::MatrixXd X_train_y(5,1);
+  	X_train_y << 0.0,
+				1.5,
+				2.0,
+				1.5,
+				4.5;
 
 	// Create train time data
 	Eigen::VectorXd t_train(5);
@@ -182,13 +225,22 @@ int main()
 				7.5,
 				9.0;
 
-	t_test = Eigen::VectorXd::LinSpaced(30,0.0,15.0);
+	Eigen::VectorXd t_test;
+	t_test.setLinSpaced(30,0.0,15.0);
+
+	Eigen::MatrixXd test_output = time_kernel(t_test, t_train);
+	cout << test_output << endl;
 
 	// Sample the prior
-	Eigen::VectorXd mu_test = gp.pred_mean(t_train, t_test, X_train);
-	Eigen::MatrixXd Sigma_test = gp.pred_var(xs);
+	Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
+	Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
+	//Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train);
 
-	for (int i=0, i<mu_test.rows(),i++) {
+	
+	//cout << Sigma_test << endl;
+
+	/* 
+	for (uint i=0; i<mu_test.rows();i++) {
 		MultiVarGaussian gp_gaussian(mu_test(i), Sigma_test(i));
 		
 		// Sample a number of points
@@ -218,9 +270,10 @@ int main()
 		//approx_sigma = approx_sigma / static_cast<double>(points);
 		//approx_sigma = approx_sigma - approx_mean * approx_mean.transpose();
 
-		cout<< approx_mean << endl;
+		cout << approx_mean << endl;
 		//cout<< approx_sigma << endl;
 
 	}
+	 */
 	
 }
