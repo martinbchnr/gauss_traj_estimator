@@ -177,20 +177,21 @@ Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen
 Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) 
 {
 	uint N = t_train.rows();
-	Eigen::MatrixXd K_test;
-	Eigen::MatrixXd K_train_test;
-	Eigen::MatrixXd C_N;
+	Eigen::MatrixXd K_t_test;
+	Eigen::MatrixXd K_t_test_train;
+	Eigen::MatrixXd K_t_train;
 	Eigen::MatrixXd I;
 	I.setIdentity(N,N);
-	double sigma_omega = 2.25;
+	double sigma_omega = 0.01;
 
-	K_test = time_kernel(t_test,t_test);
+	K_t_test = time_kernel(t_test,t_test);
 
-	K_train_test = time_kernel(t_train,t_test);
-	C_N = time_kernel(t_train,t_train) + pow(sigma_omega,2) * I;
+	K_t_test_train = time_kernel(t_test,t_train);
+
+	K_t_train = time_kernel(t_train, t_train) + pow(sigma_omega,2) * I;
 
 	Eigen::MatrixXd var;
-	var = K_test - K_train_test.transpose() * C_N.inverse() * K_train_test;
+	var = K_t_test - K_t_test_train.transpose() * K_t_train.inverse() * K_t_test_train;
 	// (TxT)-(TxN)(NxN)(NxT)
 	return var;
 }
@@ -234,7 +235,8 @@ int main()
 	// Sample the prior
 	Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
 	Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
-	//Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train);
+	
+	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train);
 
 	
 	//cout << Sigma_test << endl;
