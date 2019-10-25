@@ -199,6 +199,8 @@ Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen:
 	Eigen::MatrixXd var;
 	var = K_t_test - K_t_test_train * K_t_train.inverse() * K_t_test_train.transpose().eval();
 	// (TxT)-(TxN)(NxN)(NxT)
+	cout << "var ---------------" << endl;
+	cout << var << endl;
 	return var;
 }
 
@@ -243,6 +245,13 @@ int main()
 	Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
 	
 	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
+
+	Madplotlib plt;
+	plt.title("Test 5: Linear vs Exponential vs Flat");
+	plt.ylabel("Y Values");
+	plt.xlabel("X Values");
+
+	plt.plot(mu_test_x, QString("label=Linear"));
 
 	
 	//cout << Sigma_test << endl;

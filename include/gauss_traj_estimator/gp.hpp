@@ -4,6 +4,7 @@
 
 
 #include <assert.h>
+#include <Madplotlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <functional>
