@@ -158,15 +158,15 @@ Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen
     
 	k_t_test_train = time_kernel(t_test,t_train);
 	k_t_test_train_transpose = k_t_test_train.transpose().eval();
-	cout << "pred_mean ---------------" << endl;
-	cout << k_t_test_train << endl;
+	//cout << "pred_mean ---------------" << endl;
+	//cout << k_t_test_train << endl;
 
 
 	K_t_train = time_kernel(t_train, t_train) + pow(sigma_omega,2) * I;
 	K_t_train_inv = K_t_train.inverse();
-	cout << K_t_train_inv << endl;
+	//cout << K_t_train_inv << endl;
 	mean = k_t_test_train * K_t_train_inv * X_train; 
-	cout << mean.col(0) << endl;
+	//cout << mean.col(0) << endl;
 	//
 	//(TxN)(NxN)(NxD) = (TxD)
 	return mean;
@@ -185,13 +185,19 @@ Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen:
 	double sigma_omega = 0.01;
 
 	K_t_test = time_kernel(t_test,t_test);
+	cout << "K_t_test ---------------" << endl;
+	cout << K_t_test << endl;
 
 	K_t_test_train = time_kernel(t_test,t_train);
+	cout << "K_t_test_train ---------------" << endl;
+	cout << K_t_test_train << endl;
 
 	K_t_train = time_kernel(t_train, t_train) + pow(sigma_omega,2) * I;
+	cout << "K_t_train ---------------" << endl;
+	cout << K_t_train << endl;
 
 	Eigen::MatrixXd var;
-	var = K_t_test - K_t_test_train.transpose() * K_t_train.inverse() * K_t_test_train;
+	var = K_t_test - K_t_test_train * K_t_train.inverse() * K_t_test_train.transpose().eval();
 	// (TxT)-(TxN)(NxN)(NxT)
 	return var;
 }
@@ -201,7 +207,7 @@ int main()
 {
 	// SCALAR KERNEL SEEMS TO WORK
 	double scalar_output = scalar_kernel(0.5, 3.1);
-	cout << scalar_output << endl;
+	//cout << scalar_output << endl;
 
 	// Create train location data
 	Eigen::MatrixXd X_train_x(5,1);
@@ -227,16 +233,16 @@ int main()
 				9.0;
 
 	Eigen::VectorXd t_test;
-	t_test.setLinSpaced(30,0.0,15.0);
+	t_test.setLinSpaced(10,0.0,15.0);
 
 	Eigen::MatrixXd test_output = time_kernel(t_test, t_train);
-	cout << test_output << endl;
+	//cout << test_output << endl;
 
 	// Sample the prior
 	Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
 	Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
 	
-	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train);
+	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
 
 	
 	//cout << Sigma_test << endl;
