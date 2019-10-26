@@ -81,7 +81,7 @@ Eigen::MatrixXd kernel_cov_matrix(Eigen::MatrixXd X) {
 	}
 	return kernel_matrix;
 }
- */
+*/
 
 /* 
 Eigen::MatrixXd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x_new) {
@@ -116,7 +116,7 @@ Eigen::MatrixXd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x
 
 	return full_kernel_matrix;
 }
- */
+*/
 
 
 // accepted

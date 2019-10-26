@@ -29,6 +29,7 @@ void TaskAllocator::trainTimesCallback(const geometry_msgs::PoseArray msg)
 
 
 
+
 void GaussTrajEstimator::SubscribeTrainPoses() {
     if (!train_poses.empty())
 	{
@@ -64,6 +65,19 @@ void GaussTrajEstimator::subscribeTargetPose() {
 		ROS_INFO("[%s]: Variable '%s' is empty", node_name.c_str(), target_pose_topic.c_str());
 	}
 }
+
+
+void TaskAllocator::PublishPredictions()
+{
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_mean_topic.c_str());
+	target_pred_path_mean_pub = node.advertise<geometry_msgs::PoseArray>(pred_path_mean, 100);
+
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_cov_topic.c_str());
+	target_pred_path_cov_pub = node.advertise<std_msgs::Float32MultiArray>(pred_path_cov, 100);
+}
+
 
 
 void GaussTrajEstimator::ToEigenArray() {
