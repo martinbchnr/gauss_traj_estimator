@@ -7,45 +7,27 @@ using namespace std;
 
 #define EPS 1e-5
 
-/* 
-GP::GP(function<double(double)> m, function<double(double, double)> k, double sigma) : m(m), k(k), sigma(sigma), n(0) {
-}  
-*/
 
 
-/* 
+
 // function to compute the covariance of data matrices: k(X,X) or k(x)
-Eigen::MatrixXd compute_cov_T(Eigen::MatrixXd X) const 
+Eigen::MatrixXd compute_data_cov(Eigen::MatrixXd X) const 
 {
     int N_cols = X.cols();
     Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
     Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
     Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
-	Eigen::MatrixXd I;
-	I.setIdentity(N,N);
-	Eigen::MatrixXd Cov_T = Sigma_X + pow(sigma_omega,2) * I;
-	return Cov_T;
-} */
 
-
-
-/* 
-Eigen::MatrixXd compute_kernel(Eigen::MatrixXd X, Eigen::VectorXd x_new) const 
-{
-    int N_cols = X.cols();
-    Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
-    Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
-    Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
-	Eigen::MatrixXd I;
-	I.setIdentity(N,N);
-	Eigen::MatrixXd Cov_T = Sigma_X + pow(sigma_omega,2) * I;
-	return Cov_T;
+	//Eigen::MatrixXd I;
+	//I.setIdentity(N,N);
+	//Eigen::MatrixXd Cov_T = Sigma_X + pow(sigma_omega,2) * I;
+	
+	return Sigma_X;
 }
-*/
 
-/* 
-// accepted
-double kernel(Eigen::VectorXd x_n, Eigen::VectorXd x_m) {
+
+// compute vector-input kernel
+double vector_kernel(Eigen::VectorXd x_n, Eigen::VectorXd x_m) {
 	
 	double g_SE = 1;
 	double l_SE = 2;
@@ -53,7 +35,9 @@ double kernel(Eigen::VectorXd x_n, Eigen::VectorXd x_m) {
 	double kernel = pow(g_SE, 2) * exp((-squared_distance)/(2*pow(l_SE,2)));
 	return kernel;
 }
- */
+
+
+// compute scalar-input kernel
 double scalar_kernel(double x_1, double x_2) {
 	
 	double g_SE = 1;
@@ -64,9 +48,7 @@ double scalar_kernel(double x_1, double x_2) {
 }
 
 
-
-/* 
-// accepted
+// compute matrix-input kernel covariance matrix
 Eigen::MatrixXd kernel_cov_matrix(Eigen::MatrixXd X) {
 
 	uint D = X.cols();
@@ -76,14 +58,14 @@ Eigen::MatrixXd kernel_cov_matrix(Eigen::MatrixXd X) {
 
 	for (uint i=0; i<N; i++) {
 		for (int j=0; j<N; j++) {
-			kernel_matrix(i,j) = kernel(X.row(i),X.row(j));
+			kernel_matrix(i,j) = vector_kernel(X.row(i),X.row(j));
 		}	
 	}
 	return kernel_matrix;
 }
-*/
 
-/* 
+
+
 Eigen::MatrixXd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x_new) {
 
 	// See Bishop Eq. (6.65)
@@ -116,10 +98,10 @@ Eigen::MatrixXd augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::VectorXd x
 
 	return full_kernel_matrix;
 }
-*/
 
 
-// accepted
+
+// used to compute time-vector kernel matrices
 Eigen::MatrixXd time_kernel(Eigen::VectorXd t_a, Eigen::VectorXd t_b) {
 
 	// See Bishop Eq. (6.65)
@@ -139,10 +121,8 @@ Eigen::MatrixXd time_kernel(Eigen::VectorXd t_a, Eigen::VectorXd t_b) {
 
 
 
-
-
 // COMPUTE EQ 11
-// Function to compute mean of y* for new data input x* (time)
+// compute predicted mean
 Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train) 
 {
 	uint N = t_train.rows();
