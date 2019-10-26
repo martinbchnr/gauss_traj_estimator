@@ -1,7 +1,6 @@
 #include "./../include/gauss_traj_estimator/gp.hpp"
 #include "./../include/gauss_traj_estimator/gaussian.hpp"
 
-
 typedef unsigned int uint;
 
 using namespace std;
@@ -167,7 +166,6 @@ Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen
 	//cout << K_t_train_inv << endl;
 	mean = k_t_test_train * K_t_train_inv * X_train; 
 	//cout << mean.col(0) << endl;
-	//
 	//(TxN)(NxN)(NxD) = (TxD)
 	return mean;
 }
@@ -201,6 +199,7 @@ Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen:
 	// (TxT)-(TxN)(NxN)(NxT)
 	cout << "var ---------------" << endl;
 	cout << var << endl;
+
 	return var;
 }
 
@@ -246,15 +245,11 @@ int main()
 	
 	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
 
-	Madplotlib plt;
-	plt.title("Test 5: Linear vs Exponential vs Flat");
-	plt.ylabel("Y Values");
-	plt.xlabel("X Values");
-
-	plt.plot(mu_test_x, QString("label=Linear"));
-
+	for(uint i=0; i < Sigma_test.rows(); i++) {
+		//covariance over time
+		cout << Sigma_test(i,i) << endl;
+	}
 	
-	//cout << Sigma_test << endl;
 
 	/* 
 	for (uint i=0; i<mu_test.rows();i++) {

@@ -2,9 +2,7 @@
 #define _GAUSS_TRAJ_ESTIMATOR_H
 
 
-
 #include <assert.h>
-#include <Madplotlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <functional>
@@ -13,6 +11,7 @@
 #include <string>
 #include <numeric>
 #include <iostream>
+
 
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Cholesky>
