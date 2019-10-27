@@ -164,8 +164,9 @@ Eigen::MatrixXd GP::pred_mean(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, 
 
 // COMPUTE EQ 12
 // Function to compute the variance of t* for new data input x*
-Eigen::MatrixXd GP::pred_var(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test) 
+Eigen::MatrixXd GP::pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test) 
 {
+	
 	uint N = t_train.rows();
 
 	Eigen::MatrixXd I;
@@ -173,20 +174,24 @@ Eigen::MatrixXd GP::pred_var(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, E
 	// noise=0.01 works
 	double sigma_omega = data_noise;
 
+	
 	Eigen::MatrixXd K_t_test = kernel_matrix_f2vect(t_test,t_test, g, l);
 	// print out K_t_test
 	cout << "pred_var(): K_t_test ---------------" << endl;
 	cout << K_t_test << endl;
+	
 	
 	Eigen::MatrixXd K_t_test_train = kernel_matrix_f2vect(t_test,t_train, g, l);
 	// print out K_t_test_train
 	cout << "pred_var(): K_t_test_train ---------------" << endl;
 	cout << K_t_test_train << endl;
 
+	 
 	Eigen::MatrixXd K_t_train  = kernel_matrix_f2vect(t_train, t_train, g, l) + pow(sigma_omega,2) * I;
 	// print out K_t_train
 	cout << "pred_var(): K_t_train ---------------" << endl;
 	cout << K_t_train << endl;
+	
 	
 	Eigen::MatrixXd var;
 	var = K_t_test - K_t_test_train * K_t_train.inverse() * K_t_test_train.transpose().eval();
@@ -234,18 +239,27 @@ int main()
 	Eigen::VectorXd t_test;
 	t_test.setLinSpaced(10,0.0,15.0);
 
-	
+	cout << "no error until gp_debug initializiation" << endl; 
+
 	GP gp_debug {1, 10, 0.01};
 
-	Eigen::VectorXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
-	Eigen::VectorXd sigma_debug = gp_debug.pred_var(X_train, t_train, t_test);
 
-	Eigen::MatrixXd test_output = gp_debug.kernel_matrix_f2vect(t_test, t_train, 1, 10);
-	//cout << test_output << endl;
+	Eigen::VectorXd mu_debug = gp_debug.pred_mean(X_train_x, t_train, t_test);
+	Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
 
 	// SCALAR KERNEL SEEMS TO WORK
 	double scalar_output = gp_debug.scalar_kernel_f2scalar(0.5, 3.1,1,10);
-	//cout << scalar_output << endl;
+	cout << scalar_output << endl;
+	
+	// PRINT DEBUG RESULTS
+	cout << "-----main() output -----------------" << endl;
+	cout << mu_debug << endl;
+	cout << sigma_debug << endl;
+	
+	//Eigen::MatrixXd test_output = gp_debug.kernel_matrix_f2vect(t_test, t_train, 1, 10);
+	//cout << test_output << endl;
+
+	
 
 	// Old function call before using GP-class
 	//Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
@@ -254,12 +268,12 @@ int main()
 	//Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
 
 	
-	
-	for(uint i=0; i < sigma_debug.rows(); i++) {
+	/* 
+	for(uint i=0; i < mean_debug.rows(); i++) {
 		//covariance over time
 		cout << sigma_debug(i,i) << endl;
 	}
-	
+	 */
 
 	/* 
 	for (uint i=0; i<mu_test.rows();i++) {

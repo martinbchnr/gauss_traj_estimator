@@ -69,7 +69,7 @@ class GP
 	Eigen::MatrixXd pred_mean(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test); 
 
 	// Get the covariances at all pairs of given points
-	Eigen::MatrixXd pred_var(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test);
+	Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test);
 
 
 };
