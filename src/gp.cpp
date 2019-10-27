@@ -7,7 +7,15 @@ using namespace std;
 
 #define EPS 1e-5
 
-GP::GP(Eigen::MatrixXd X_train, Eigen::Matrix t_train, Eigen::Matrix t_test, double g, double l, double data_noise); 
+// initialize 
+GP::GP(double kernel_g_SE=1, double kernel_l_SE=10, double sigma_noise=0.01): g(kernel_g_SE), l(kernel_l_SE), data_noise(sigma_noise)  
+{   
+}
+
+GP::~GP()
+{   
+}
+
 
 
 // function to compute the covariance of data matrices: k(X,X) or k(x)
@@ -16,8 +24,8 @@ Eigen::MatrixXd GP::compute_data_cov(Eigen::MatrixXd X)
     int N_cols = X.cols();
     Eigen::VectorXd ones = Eigen::VectorXd::Ones(N_cols);
     
-	Eigen::VectorXd mean_X = (1/N)*(X.transpose() * ones);
-    Eigen::MatrixXd Sigma_X = (1/N)*(X.transpose() * X - mean_X * mean_X.tranpose());
+	Eigen::VectorXd mean_X = (1/N_cols)*(X.transpose() * ones);
+    Eigen::MatrixXd Sigma_X = (1/N_cols)*(X.transpose() * X - mean_X * mean_X.transpose());
 	
 	return Sigma_X;
 }
@@ -28,7 +36,7 @@ double GP::scalar_kernel_f2vect(Eigen::VectorXd x_a, Eigen::VectorXd x_b, double
 	
 	double g_SE = g;
 	double l_SE = l;
-	double squared_distance = (x_a.transpose() * x_a) + (x_b.transpose() * x_b) - (x_a.transpose() * x_b);
+	double squared_distance = (x_a.transpose() * x_a).sum() + (x_b.transpose() * x_b).sum() - (x_a.transpose() * x_b).sum();
 	double kernel = pow(g_SE, 2) * exp((-squared_distance)/(2*pow(l_SE,2)));
 	return kernel;
 }
@@ -55,7 +63,7 @@ Eigen::MatrixXd GP::kernel_cov_matrix_f1matrix(Eigen::MatrixXd X, double g, doub
 
 	for (uint i=0; i<N; i++) {
 		for (int j=0; j<N; j++) {
-			kernel_matrix(i,j) = scalar_kernel_f2vect(X.row(i),X.row(j),g,l);
+			kernel_matrix(i,j) = GP::scalar_kernel_f2vect(X.row(i),X.row(j),g,l);
 		}	
 	}
 	return kernel_matrix;
@@ -73,14 +81,14 @@ Eigen::MatrixXd GP::augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::Vector
 	Eigen::VectorXd augm_vector(N);
 
 	Eigen::MatrixXd learning_data_cov(N,N);
-	learning_data_cov = kernel_cov_matrix_f1matrix(X,g,l);
+	learning_data_cov = GP::kernel_cov_matrix_f1matrix(X,g,l);
 
 	for (int i=0; i<N; i++) {
-		augm_vector(i) = scalar_kernel_f2vect(X.row(i),x_new);
+		augm_vector(i) = GP::scalar_kernel_f2vect(X.row(i),x_new, g, l);
 	}
 
 	Eigen::VectorXd augm_scalar(1);
-	augm_scalar = scalar_kernel_f2vect(x_new,x_new);
+	augm_scalar(0) = GP::scalar_kernel_f2vect(x_new,x_new, g, l);
 
 	// concatenate all three computed kernels/kernel matrices
 	Eigen::MatrixXd upper_half(learning_data_cov.rows(), learning_data_cov.cols()+augm_vector.cols());
@@ -100,7 +108,7 @@ Eigen::MatrixXd GP::augmented_kernel_cov_matrix(Eigen::MatrixXd X, Eigen::Vector
 
 
 // compute kernel matrix
-Eigen::MatrixXd GP::kernel_matrix_2vect(Eigen::VectorXd x_a, Eigen::VectorXd x_b, double g, double l) {
+Eigen::MatrixXd GP::kernel_matrix_f2vect(Eigen::VectorXd x_a, Eigen::VectorXd x_b, double g, double l) {
 
 	// See Bishop Eq. (6.65)
 	uint dim_a = x_a.rows();
@@ -118,9 +126,12 @@ Eigen::MatrixXd GP::kernel_matrix_2vect(Eigen::VectorXd x_a, Eigen::VectorXd x_b
 }
 
 
+
+
+
 // COMPUTE EQ 11
 // compute predicted mean
-Eigen::MatrixXd GP::pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train, double data_noise, double g, double l) 
+Eigen::MatrixXd GP::pred_mean(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test) 
 {
 	uint N = t_train.rows();
 
@@ -134,7 +145,7 @@ Eigen::MatrixXd GP::pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, E
 	Eigen::MatrixXd k_t_test_train_transpose = k_t_test_train.transpose().eval();
 	// print out k_t_test_train
 	cout << "pred_mean(): K_t_test_train ---------------" << endl;
-	cout << K_t_test_train << endl;
+	cout << k_t_test_train << endl;
 	
 	Eigen::MatrixXd K_t_train = kernel_matrix_f2vect(t_train, t_train,g,l) + pow(sigma_omega,2) * I;
 	Eigen::MatrixXd K_t_train_inv = K_t_train.inverse();
@@ -153,7 +164,7 @@ Eigen::MatrixXd GP::pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, E
 
 // COMPUTE EQ 12
 // Function to compute the variance of t* for new data input x*
-Eigen::MatrixXd GP::pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train, double data_noise, double g, double l) 
+Eigen::MatrixXd GP::pred_var(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test) 
 {
 	uint N = t_train.rows();
 
@@ -189,9 +200,6 @@ Eigen::MatrixXd GP::pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Ei
 
 int main()
 {
-	// SCALAR KERNEL SEEMS TO WORK
-	double scalar_output = scalar_kernel_f2scalar(0.5, 3.1,1,10);
-	//cout << scalar_output << endl;
 
 	// Create train location data
 	Eigen::MatrixXd X_train_x(5,1);
@@ -208,6 +216,13 @@ int main()
 				1.5,
 				4.5;
 
+	Eigen::MatrixXd X_train(5,2);
+	X_train  << 0.0, 0,0,
+				1.0, 1.5,  
+				2.0, 2.0,
+				2.5, 1.5,
+				3.0; 4.5;
+
 	// Create train time data
 	Eigen::VectorXd t_train(5);
   	t_train << 	0.0, 
@@ -219,18 +234,30 @@ int main()
 	Eigen::VectorXd t_test;
 	t_test.setLinSpaced(10,0.0,15.0);
 
-	Eigen::MatrixXd test_output = kernel_matrix_f2vect(t_test, t_train);
+	
+	GP gp_debug {1, 10, 0.01};
+
+	Eigen::VectorXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
+	Eigen::VectorXd sigma_debug = gp_debug.pred_var(X_train, t_train, t_test);
+
+	Eigen::MatrixXd test_output = gp_debug.kernel_matrix_f2vect(t_test, t_train, 1, 10);
 	//cout << test_output << endl;
 
-	// Sample the prior
-	Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
-	Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
-	
-	Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
+	// SCALAR KERNEL SEEMS TO WORK
+	double scalar_output = gp_debug.scalar_kernel_f2scalar(0.5, 3.1,1,10);
+	//cout << scalar_output << endl;
 
-	for(uint i=0; i < Sigma_test.rows(); i++) {
+	// Old function call before using GP-class
+	//Eigen::VectorXd mu_test_x = pred_mean(t_train, t_test, X_train_x);
+	//Eigen::VectorXd mu_test_y = pred_mean(t_train, t_test, X_train_y);
+	
+	//Eigen::MatrixXd Sigma_test = pred_var(t_train, t_test, X_train_x);
+
+	
+	
+	for(uint i=0; i < sigma_debug.rows(); i++) {
 		//covariance over time
-		cout << Sigma_test(i,i) << endl;
+		cout << sigma_debug(i,i) << endl;
 	}
 	
 

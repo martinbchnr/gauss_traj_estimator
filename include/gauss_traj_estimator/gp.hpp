@@ -20,9 +20,14 @@
 class GP
 {
 	public:
-	// mean and covariance functions
-	// std::function<double(double)> m;
-	// std::function<double(double, double)> k;
+	
+	// constructor & destructor
+	GP(double g, double l, double data_noise); 
+	~GP();
+
+	double g;
+	double l;
+	double data_noise;
 
 	// NOISE PARAMETER
 	double sigma_omega; // 0.01 works
@@ -32,7 +37,10 @@ class GP
 	Eigen::MatrixXd X_train;
 	// Define data matrix that holds the train time data
 	Eigen::VectorXd t_train;
-	// Define data matrix that holds the test time data
+	
+	// TEST TIME DATA
+	// Define data matrix that holds the test time data as well as
+	// predicted means and covariances
 	Eigen::VectorXd t_test;
 
 	Eigen::MatrixXd pred_path_var;
@@ -56,12 +64,12 @@ class GP
 
 	// Compute the kernel matrix based on two vectors
 	Eigen::MatrixXd kernel_matrix_f2vect(Eigen::VectorXd x_a, Eigen::VectorXd x_b, double g, double l);
-	
+
 	// Get the mean values at given points
-	Eigen::MatrixXd pred_mean(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train, double data_noise, double g, double l) 
+	Eigen::MatrixXd pred_mean(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test); 
 
 	// Get the covariances at all pairs of given points
-	Eigen::MatrixXd pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test, Eigen::MatrixXd X_train, double data_noise, double g, double l);
+	Eigen::MatrixXd pred_var(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, Eigen::VectorXd t_test);
 
 
 };
