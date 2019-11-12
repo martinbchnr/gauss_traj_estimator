@@ -1,5 +1,5 @@
 #include "./../include/gauss_traj_estimator/gp.hpp"
-#include "./../include/gauss_traj_estimator/gaussian.hpp"
+
 
 typedef unsigned int uint;
 

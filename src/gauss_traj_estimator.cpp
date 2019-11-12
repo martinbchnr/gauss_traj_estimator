@@ -1,4 +1,5 @@
 #include "../include/gauss_traj_estimator.h"
+#include "../include/gp.hpp"
 
 GaussTrajEstimator::GaussTrajEstimator()
 {
@@ -67,7 +68,7 @@ void GaussTrajEstimator::subscribeTargetPose() {
 }
 
 
-void TaskAllocator::PublishPredictions()
+void GaussTrajEstimator::PublishPredictions()
 {
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_mean_topic.c_str());
@@ -80,21 +81,54 @@ void TaskAllocator::PublishPredictions()
 
 
 
-void GaussTrajEstimator::ToEigenArray() {
+Eigen::MatrixXd GaussTrajEstimator::RosToEigenArray(const geometry_msgs::PoseArray pos_array)
+{
+
+	int traverse_length = pos_array.poses.size();
+	Eigen::MatrixXd loc_list(traverse_length,2);
+
+	//std::vector<std::pair<double,double>> vector;
+
+	for (int i = 0; i < pos_array.poses.size(); ++i)
+	{
+		loc_list(i,0) = pos_array.poses.position.x;
+		loc_list(i,1) = pos_array.poses.position.y;
+
+		//std::pair<double,double> coord = {pos_array.goal_list[i].pose.position.x, pos_array.goal_list[i].pose.position.y};
+		//vector.push_back(coord);
+	}
+	return MatrixXd
 }
 
+geometry_msgs::PoseArray TaskAllocator::EigenToRosArray(const Eigen::MatrixXd matrix)
+{
+	int matrix_length = matrix.size();
+	geometry_msgs::PoseArray pose_array;
 
-void GaussTrajEstimator::ToMsgType() {
+	for (int i = 0; i < size; ++i)
+	{
+		geometry_msgs::Pose coord;
+		coord.position.x = matrix(i,0);
+		coord.position.y = matrix(i,1);;
+		coord.position.z = 0.0;
+
+		pose_array.poses.push_back(coord);
+
+	}
+	return pose_array;
 }
 
 
 
 void GaussTrajEstimator::spin() {
 
-    ros::rate r(1);
+    ros::rate r(0.1);
     while(ros::ok()) {
         ros::spinOnce();
+		bool lost_track = true;
         if(lost_track) {
+
+
             // Switch to target tracking prediction mode
         }
         r.sleep();
@@ -109,6 +143,8 @@ int main(int argc, char **argv)
     gaussian_traj_est.SubscribeTrainTimes();
     gaussian_traj_est.SubscribeTargetPose();
     gaussian_traj_est.PublishPredictions();
+
+	GP gp_node {1, 10, 0.01};
     gaussian_traj_node.spin();
     return 0;
 }

@@ -16,6 +16,8 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Cholesky>
 
+#include "./../include/gauss_traj_estimator/gaussian.hpp"
+
 
 class GP
 {
