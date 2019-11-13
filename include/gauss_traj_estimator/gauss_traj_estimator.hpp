@@ -8,6 +8,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Float32MultiArray.h>
 #include "gp.hpp"
 
 class GaussTrajEstimator {

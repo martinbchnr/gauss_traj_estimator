@@ -1,6 +1,11 @@
 #include "../include/gauss_traj_estimator.h"
 #include "../include/gp.hpp"
 
+typedef unsigned int uint;
+
+using namespace std;
+
+
 GaussTrajEstimator::GaussTrajEstimator()
 {
     node_name = ros::this_node::getName();
@@ -81,8 +86,9 @@ void GaussTrajEstimator::PublishPredictions()
 
 
 
-Eigen::MatrixXd GaussTrajEstimator::RosToEigenArray(const geometry_msgs::PoseArray pos_array)
+Eigen::MatrixXd GaussTrajEstimator::RosPoseToEigenArray(const geometry_msgs::PoseArray pos_array)
 {
+	// commented out the 
 
 	int traverse_length = pos_array.poses.size();
 	Eigen::MatrixXd loc_list(traverse_length,2);
@@ -91,22 +97,22 @@ Eigen::MatrixXd GaussTrajEstimator::RosToEigenArray(const geometry_msgs::PoseArr
 
 	for (int i = 0; i < pos_array.poses.size(); ++i)
 	{
-		loc_list(i,0) = pos_array.poses.position.x;
-		loc_list(i,1) = pos_array.poses.position.y;
+		loc_list(i,0) = pos_array.poses[i].position.x;
+		loc_list(i,1) = pos_array.poses[i].position.y;
 
 		//std::pair<double,double> coord = {pos_array.goal_list[i].pose.position.x, pos_array.goal_list[i].pose.position.y};
 		//vector.push_back(coord);
 	}
-	return MatrixXd
+	return loc_list;
 }
 
-geometry_msgs::PoseArray TaskAllocator::EigenToRosArray(const Eigen::MatrixXd matrix)
+geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPoseArray(const Eigen::MatrixXd matrix)
 {
-	int matrix_length = matrix.size();
+	int matrix_size = matrix.rows();
 	geometry_msgs::PoseArray pose_array;
 
-	for (int i = 0; i < size; ++i)
-	{
+	for (int i = 0; i < matrix_size; ++i)
+	{	
 		geometry_msgs::Pose coord;
 		coord.position.x = matrix(i,0);
 		coord.position.y = matrix(i,1);;
@@ -116,6 +122,49 @@ geometry_msgs::PoseArray TaskAllocator::EigenToRosArray(const Eigen::MatrixXd ma
 
 	}
 	return pose_array;
+}
+
+std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen::MatrixXd time_matrix)
+{
+	int matrix_length = matrix.size();
+	std_msgs::Float32MultiArray time_msg;
+
+	for (int i = 0; i < size; ++i)
+	{	
+		time_msg.data.push_back(time_matrix[i]);
+	}
+	return time_msg;
+}
+
+std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen::MatrixXd sigma_matrix)
+{
+	std_msgs::Float32MultiArray sigma_msg;
+
+	sigma_msg.layout.dim[0].size = sigma_matrix.rows();
+	sigma_msg.layout.dim[0].stride = sigma_matrix.rows() * sigma_matrix.cols();
+	sigma_msg.layout.dim[1].size   = sigma_matrix.cols():
+	sigma_msg.layout.dim[1].stride = 1*sigma_matrix.cols();
+	sigma_msg.layout.dim[2].size   = 1
+	sigma_msg.layout.dim[2].stride = 1
+	
+	for (int i = 0; i < matrix.rows(); ++i)
+	{
+		for (int j=0; j < matrix.cols(); ++j) 
+		{	
+			sigma_msg(i,j,0) = sigma_matrix[i,j]
+		}	
+	}
+
+	return sigma_msg;
+}
+
+# multiarray(i,j,k) refers to the ith row, jth column, and kth channel.
+
+	for (int i = 0; i < matrix.rows(); ++i)
+	{	
+		sigma_msg.data.push_back(time_matrix[i]);
+	}
+	return sigma_msg;
 }
 
 
