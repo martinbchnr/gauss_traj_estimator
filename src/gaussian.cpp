@@ -6,13 +6,11 @@
 #include <vector>
 #include <string>
 
-#include <./../include/gauss_traj_estimator/gaussian.h>
+#include "./../include/gauss_traj_estimator/gaussian.hpp"
 #define EPS 1e-5
 
 #include <iostream>
 
-#include <Eigen/Dense>
-#include <Eigen/Cholesky>
 
 using namespace std;
 typedef unsigned int uint;
@@ -20,63 +18,62 @@ typedef unsigned int uint;
 
 // http://blog.sarantop.com/notes/mvn
 
-class MultiVarGaussian
-{
-    private:
-    public:
 
-    // constructor and destructor
-    MultiVarGaussian(const Eigen::VectorXd& mu, const Eigen::MatrixXd& s) {
-        mean = mu;
-        sigma = s;
-    };
-    
-    //~MultiVarGaussian();
 
-    // Density function
-    double pdf(const Eigen::VectorXd& x) const 
-    {
-        double n_dim = x.rows();
-        double mahalanobis_term = (x-mean).transpose() * sigma.inverse() * (x-mean);
-        double sqrt2piN = std::pow(2*M_PI, n_dim/2);
-        double sigma_det_sqrt = std::pow(sigma.determinant(), 1/2);
-
-        double normal_distrib = (1/(sigma_det_sqrt * sqrt2piN)) * exp(-0.5 * mahalanobis_term);
-        return normal_distrib;
-    }
-
-    // Sample from the distribution
-    
-    Eigen::VectorXd sample() const 
-    {
-        // Use Cholesky decomposition to find upper and lower triagonal matrix of sigma
-        Eigen::MatrixXd L = sigma.llt().matrixL();
-
-        // Generate random numbers acc. to white Gaussian
-        //normal_distribution<double> N(0.0, 1.0);
-        
-        std::random_device rd{};
-        std::mt19937 gen{rd()};
-        std::normal_distribution<> N{0,1};
-
-        Eigen::VectorXd z(mean.rows());
-	    // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
-        for (uint k=0; k<mean.size(); k++)  
-        {
-		    z[k] = N(gen);
-	    }
-
-	    Eigen::VectorXd sampled_vector(mean.rows());
-        for (uint i=0; i<mean.size(); i++)
-        {}
-        
-        sampled_vector = mean + L*z;  //(L.transpose() * z).sum();
-        
-
-	    return sampled_vector;    
-    }
-    
+// constructor and destructor
+MultiGaussian::MultiGaussian(const Eigen::VectorXd& mu, const Eigen::MatrixXd& s) {
+    mean = mu;
+    sigma = s;
 };
+
+//~MultiGaussian();
+
+// Density function
+double MultiGaussian::pdf(const Eigen::VectorXd& x) const 
+{
+    double n_dim = x.rows();
+    double mahalanobis_term = (x-mean).transpose() * sigma.inverse() * (x-mean);
+    double sqrt2piN = std::pow(2*M_PI, n_dim/2);
+    double sigma_det_sqrt = std::pow(sigma.determinant(), 1/2);
+
+    double normal_distrib = (1/(sigma_det_sqrt * sqrt2piN)) * exp(-0.5 * mahalanobis_term);
+    return normal_distrib;
+}
+
+
+
+// Sample from the distribution
+
+Eigen::VectorXd MultiGaussian::sample() const 
+{
+    // Use Cholesky decomposition to find upper and lower triagonal matrix of sigma
+    Eigen::MatrixXd L = sigma.llt().matrixL();
+
+    // Generate random numbers acc. to white Gaussian
+    //normal_distribution<double> N(0.0, 1.0);
+    
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    std::normal_distribution<> N{0,1};
+
+    Eigen::VectorXd z(mean.rows());
+    // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
+    for (uint k=0; k<mean.size(); k++)  
+    {
+        z[k] = N(gen);
+    }
+
+    Eigen::VectorXd sampled_vector(mean.rows());
+    for (uint i=0; i<mean.size(); i++)
+    {}
+    
+    sampled_vector = mean + L*z;  //(L.transpose() * z).sum();
+    
+
+    return sampled_vector;    
+}
+    
+
 
 
 int main() {
@@ -93,7 +90,7 @@ int main() {
 
     Eigen::Vector2d x(-0.6,-0.6);
 
-    MultiVarGaussian test_gaussian(m,s);
+    MultiGaussian test_gaussian(m,s);
     double prob = test_gaussian.pdf(x);
     
     cout << prob << endl;
@@ -108,7 +105,7 @@ int main() {
                 7, 5;
     Eigen::VectorXd mean_sample(2);
     mean_sample << 2, 2;
-    MultiVarGaussian test_gaussian_sample(mean_sample, sigma_sample);
+    MultiGaussian test_gaussian_sample(mean_sample, sigma_sample);
 
     
     

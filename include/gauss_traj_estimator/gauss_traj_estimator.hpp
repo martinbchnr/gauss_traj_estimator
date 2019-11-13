@@ -1,5 +1,4 @@
-#ifndef _GAUSS_TRAJ_ESTIMATOR_H
-#define _GAUSS_TRAJ_ESTIMATOR_H
+
 
 
 #include <ros/ros.h>
@@ -23,11 +22,12 @@ class GaussTrajEstimator {
 
   ros::Subscriber target_pose_subscriber;
   ros::Subscriber train_poses_subscriber;
-  ros::Subscriber train_time_subscriber;
+  ros::Subscriber train_times_subscriber;
 
   // Publishers
   ros::Publisher target_pred_path_mean_pub;
   ros::Publisher target_pred_path_cov_pub;
+
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
@@ -42,16 +42,23 @@ class GaussTrajEstimator {
   std_msgs::Float32MultiArray pred_path_cov;
   
 
+  // Conversion methods between ROS messages and Eigen data types
+  std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);
+  std_msgs::Float32MultiArray EigenToRosTimeArray(const Eigen::MatrixXd time_matrix);
+  geometry_msgs::PoseArray EigenToRosPoseArray(const Eigen::MatrixXd matrix);
+  Eigen::MatrixXd RosPoseToEigenArray(const geometry_msgs::PoseArray pos_array);
+
+
   public:
   GaussTrajEstimator();
   ~GaussTrajEstimator();
   void targetPoseCallback(const geometry_msgs::PoseWithCovarianceStamped msg);
-  void trainDataPosCallback(const geometry_msgs::PoseArray msg);
-  void trainDataTimeCallback(const std_msgs::Float32MultiArray msg);
+  void trainPosesCallback(const geometry_msgs::PoseArray msg);
+  void trainTimesCallback(const std_msgs::Float32MultiArray msg);
   void SubscribeTrainPoses();
   void SubscribeTrainTimes();
   void SubscribeTargetPose();
   void PublishPredictions();
   void spin();
-}
+};
 

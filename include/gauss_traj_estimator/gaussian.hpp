@@ -1,9 +1,10 @@
 #include <random>
 #include <vector>
 
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Cholesky>
 
-
-class MultiVarGaussian
+class MultiGaussian
 {
 private:
 	
@@ -15,12 +16,12 @@ private:
 
 public:
 	// Create a new multivariate distribution N(mu, Sigma), with engine gen
-	MultiVarGaussian(const Eigen::VectorXd& mu, const Eigen::MatrixXd& s);
+	MultiGaussian(const Eigen::VectorXd& mu, const Eigen::MatrixXd& s);
 
 	// Return probability values
-	double pdf(const Eigen::VectorXd& x);
+	double pdf(const Eigen::VectorXd& x) const;
 
 	// Sample the distribution
-	Eigen::VectorXd sample();
+	Eigen::VectorXd sample() const;
 };
 

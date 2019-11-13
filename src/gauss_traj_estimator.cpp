@@ -1,5 +1,5 @@
-#include "../include/gauss_traj_estimator.h"
-#include "../include/gp.hpp"
+#include "./../include/gauss_traj_estimator/gauss_traj_estimator.hpp"
+
 
 typedef unsigned int uint;
 
@@ -15,7 +15,7 @@ GaussTrajEstimator::~GaussTrajEstimator()
 {
 }
 
-
+// Store the current target position
 void GaussTrajEstimator::targetPoseCallback(const geometry_msgs::PoseWithCovarianceStamped msg)
 {
 	target_pose.pose.pose.position.x = msg.pose.pose.position.x;
@@ -23,12 +23,14 @@ void GaussTrajEstimator::targetPoseCallback(const geometry_msgs::PoseWithCovaria
 	target_pose.pose.pose.position.z = msg.pose.pose.position.z;
 }
 
+// Receive the position training data = via-points 
 void GaussTrajEstimator::trainPosesCallback(const geometry_msgs::PoseArray msg)
 {
 	train_poses = msg;
 }
 
-void TaskAllocator::trainTimesCallback(const geometry_msgs::PoseArray msg)
+// Receive the time training data = assumed time when the via points are visited
+void GaussTrajEstimator::trainTimesCallback(const std_msgs::Float32MultiArray msg)
 {
 	train_times = msg;
 }
@@ -37,10 +39,10 @@ void TaskAllocator::trainTimesCallback(const geometry_msgs::PoseArray msg)
 
 
 void GaussTrajEstimator::SubscribeTrainPoses() {
-    if (!train_poses.empty())
+    if (!train_poses_topic.empty())
 	{
 		ROS_INFO("[%s]: Subscribing to topic '%s'", node_name.c_str(), train_poses_topic.c_str());
-	    train_poses_subscriber = node.subscribe(goal_pos_topic,1, &GaussTrajEstimator::trainPosesCallback, this);
+	    train_poses_subscriber = node.subscribe(train_poses_topic,1, &GaussTrajEstimator::trainPosesCallback, this);
 	}
 	else
 	{	
@@ -49,10 +51,10 @@ void GaussTrajEstimator::SubscribeTrainPoses() {
 }
 
 void GaussTrajEstimator::SubscribeTrainTimes() {
-    if (!train_times.empty())
+    if (!train_times_topic.empty())
 	{
 		ROS_INFO("[%s]: Subscribing to topic '%s'", node_name.c_str(), train_times_topic.c_str());
-		train_times_subscriber = node.subscribe(goal_pos_topic,1, &GaussTrajEstimator::trainTimesCallback, this);
+		train_times_subscriber = node.subscribe(train_times_topic,1, &GaussTrajEstimator::trainTimesCallback, this);
 	}
 	else
 	{	
@@ -60,8 +62,8 @@ void GaussTrajEstimator::SubscribeTrainTimes() {
 	}
 }
 
-void GaussTrajEstimator::subscribeTargetPose() {
-    if (!train_times.empty())
+void GaussTrajEstimator::SubscribeTargetPose() {
+    if (!target_pose_topic.empty())
 	{
 		ROS_INFO("[%s]: Subscribing to topic '%s'", node_name.c_str(), target_pose_topic.c_str());
 		train_times_subscriber = node.subscribe(target_pose_topic,1, &GaussTrajEstimator::targetPoseCallback, this);
@@ -77,18 +79,19 @@ void GaussTrajEstimator::PublishPredictions()
 {
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_mean_topic.c_str());
-	target_pred_path_mean_pub = node.advertise<geometry_msgs::PoseArray>(pred_path_mean, 100);
+	target_pred_path_mean_pub = node.advertise<geometry_msgs::PoseArray>(target_pred_path_mean_topic, 100);
 
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_cov_topic.c_str());
-	target_pred_path_cov_pub = node.advertise<std_msgs::Float32MultiArray>(pred_path_cov, 100);
+	target_pred_path_cov_pub = node.advertise<std_msgs::Float32MultiArray>(target_pred_path_cov_topic, 100);
 }
+
 
 
 
 Eigen::MatrixXd GaussTrajEstimator::RosPoseToEigenArray(const geometry_msgs::PoseArray pos_array)
 {
-	// commented out the 
+	// commented out the case for using std matrices instead of Eigen (user's choice)
 
 	int traverse_length = pos_array.poses.size();
 	Eigen::MatrixXd loc_list(traverse_length,2);
@@ -126,10 +129,9 @@ geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPoseArray(const Eigen::Ma
 
 std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen::MatrixXd time_matrix)
 {
-	int matrix_length = matrix.size();
 	std_msgs::Float32MultiArray time_msg;
 
-	for (int i = 0; i < size; ++i)
+	for (int i = 0; i < time_matrix.rows(); ++i)
 	{	
 		time_msg.data.push_back(time_matrix[i]);
 	}
@@ -142,16 +144,17 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 
 	sigma_msg.layout.dim[0].size = sigma_matrix.rows();
 	sigma_msg.layout.dim[0].stride = sigma_matrix.rows() * sigma_matrix.cols();
-	sigma_msg.layout.dim[1].size   = sigma_matrix.cols():
+	sigma_msg.layout.dim[1].size   = sigma_matrix.cols();
 	sigma_msg.layout.dim[1].stride = 1*sigma_matrix.cols();
-	sigma_msg.layout.dim[2].size   = 1
-	sigma_msg.layout.dim[2].stride = 1
+	sigma_msg.layout.dim[2].size   = 1;
+	sigma_msg.layout.dim[2].stride = 1;
 	
-	for (int i = 0; i < matrix.rows(); ++i)
+	for (int i = 0; i < sigma_matrix.rows(); ++i)
 	{
-		for (int j=0; j < matrix.cols(); ++j) 
+		for (int j=0; j < sigma_matrix.cols(); ++j) 
 		{	
-			sigma_msg(i,j,0) = sigma_matrix[i,j]
+			uint prob_index = 1*sigma_matrix.rows()*sigma_matrix.cols() + + i * sigma_matrix.cols() + j;
+			sigma_msg[prob_index] = sigma_matrix[i,j];
 			//multiarray(i,j,k) refers to the ith row, jth column, and kth channel.
 		}	
 	}
@@ -162,7 +165,7 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 
 void GaussTrajEstimator::spin() {
 
-    ros::rate r(0.1);
+    ros::Rate r(0.1);
     while(ros::ok()) {
         ros::spinOnce();
 		bool lost_track = true;
@@ -178,13 +181,13 @@ void GaussTrajEstimator::spin() {
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "gauss_traj_estimator");
-    GaussTrajEstimator gaussian_traj_est;
-    gaussian_traj_est.SubscribeTrainPoses();
-    gaussian_traj_est.SubscribeTrainTimes();
-    gaussian_traj_est.SubscribeTargetPose();
-    gaussian_traj_est.PublishPredictions();
+    GaussTrajEstimator gaussian_traj_estimator;
+    gaussian_traj_estimator.SubscribeTrainPoses();
+    gaussian_traj_estimator.SubscribeTrainTimes();
+    gaussian_traj_estimator.SubscribeTargetPose();
+    gaussian_traj_estimator.PublishPredictions();
 
-	GP gp_node {1, 10, 0.01};
-    gaussian_traj_node.spin();
+	//GP gp_node {1, 10, 0.01};
+    gaussian_traj_estimator.spin();
     return 0;
 }
