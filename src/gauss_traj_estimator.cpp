@@ -136,7 +136,7 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen:
 	return time_msg;
 }
 
-std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen::MatrixXd sigma_matrix)
+std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix)
 {
 	std_msgs::Float32MultiArray sigma_msg;
 
@@ -152,21 +152,12 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen:
 		for (int j=0; j < matrix.cols(); ++j) 
 		{	
 			sigma_msg(i,j,0) = sigma_matrix[i,j]
+			//multiarray(i,j,k) refers to the ith row, jth column, and kth channel.
 		}	
 	}
 
 	return sigma_msg;
 }
-
-# multiarray(i,j,k) refers to the ith row, jth column, and kth channel.
-
-	for (int i = 0; i < matrix.rows(); ++i)
-	{	
-		sigma_msg.data.push_back(time_matrix[i]);
-	}
-	return sigma_msg;
-}
-
 
 
 void GaussTrajEstimator::spin() {
