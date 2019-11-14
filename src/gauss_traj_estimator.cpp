@@ -18,23 +18,42 @@ GaussTrajEstimator::~GaussTrajEstimator()
 // Store the current target position
 void GaussTrajEstimator::targetPoseCallback(const geometry_msgs::PoseWithCovarianceStamped msg)
 {
-	target_pose.pose.pose.position.x = msg.pose.pose.position.x;
-	target_pose.pose.pose.position.y = msg.pose.pose.position.y;
-	target_pose.pose.pose.position.z = msg.pose.pose.position.z;
+	target_pose_rosmsg.pose.pose.position.x = msg.pose.pose.position.x;
+	target_pose_rosmsg.pose.pose.position.y = msg.pose.pose.position.y;
+	target_pose_rosmsg.pose.pose.position.z = msg.pose.pose.position.z;
+
+	target_pose = RosPoseWithCovToEigenArray(target_pose_rosmsg);
+
+	cout << "Received target pose:" << endl;
+	cout << target_pose << endl;
+	
 }
 
 // Receive the position training data = via-points 
 void GaussTrajEstimator::trainPosesCallback(const geometry_msgs::PoseArray msg)
 {
-	train_poses = msg;
+	train_poses_rosmsg = msg;
+	train_poses = GaussTrajEstimator::RosPosesToEigenArray(train_poses_rosmsg);
+
+	train_poses_x = train_poses.col(0);
+	train_poses_y = train_poses.col(1);
+
+	cout << "Received training poses:" << endl;
+	cout << train_poses_x << endl;
+	cout << train_poses_y << endl;
+
 }
 
 // Receive the time training data = assumed time when the via points are visited
-void GaussTrajEstimator::trainTimesCallback(const std_msgs::Float32MultiArray msg)
+void GaussTrajEstimator::trainTimesCallback(const gauss_traj_estimator::TrainTimes msg)
 {
-	train_times = msg;
-}
+	train_times_rosmsg = msg;
+	train_times = GaussTrajEstimator::RosTimesToEigenArray(train_times_rosmsg);
 
+	cout << "Received training times:" << endl;
+	cout << train_times << endl;
+
+}
 
 
 
@@ -89,7 +108,7 @@ void GaussTrajEstimator::PublishPredictions()
 
 
 
-Eigen::MatrixXd GaussTrajEstimator::RosPoseToEigenArray(const geometry_msgs::PoseArray pos_array)
+Eigen::MatrixXd GaussTrajEstimator::RosPosesToEigenArray(const geometry_msgs::PoseArray pos_array)
 {
 	// commented out the case for using std matrices instead of Eigen (user's choice)
 
@@ -109,7 +128,27 @@ Eigen::MatrixXd GaussTrajEstimator::RosPoseToEigenArray(const geometry_msgs::Pos
 	return loc_list;
 }
 
-geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPoseArray(const Eigen::MatrixXd matrix)
+
+
+Eigen::MatrixXd GaussTrajEstimator::RosTimesToEigenArray(const gauss_traj_estimator::TrainTimes times_array)
+{
+
+	Eigen::MatrixXd time_vector;
+
+	// in case when using standard msg type:
+	//std_msgs::Float32MultiArray time_msg;
+	//int width = times_array.layout.dim[2].size;
+	//int height = times_array.layout.dim[1].size;
+
+
+	for (int i = 0; i < times_array.times.size(); ++i)
+	{	
+		time_vector(i,0) = times_array.times[i];		
+	}
+	return time_vector;
+}
+
+geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPosesArray(const Eigen::MatrixXd matrix)
 {
 	int matrix_size = matrix.rows();
 	geometry_msgs::PoseArray pose_array;
@@ -125,6 +164,16 @@ geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPoseArray(const Eigen::Ma
 
 	}
 	return pose_array;
+}
+
+Eigen::MatrixXd GaussTrajEstimator::RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose) 
+{
+	Eigen::MatrixXd eig_pose(2,1);
+	
+	eig_pose(0,0) = pose.pose.pose.position.x;
+	eig_pose(1,0) = pose.pose.pose.position.y;
+
+	return eig_pose;
 }
 
 std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen::MatrixXd time_matrix)

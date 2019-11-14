@@ -1,0 +1,1 @@
+rostopic pub /target_pose geometry_msgs/PoseWithCovarianceStamped "{pose: {pose: {position: {x: 1.0,y: 2.0, z: 0.0}}}}"

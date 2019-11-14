@@ -1,0 +1,1 @@
+rostopic pub /train_times gauss_traj_estimator/TrainTimes "{times: [1.0, 2.0]}"
