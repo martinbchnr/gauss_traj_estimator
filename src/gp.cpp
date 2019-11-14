@@ -203,7 +203,10 @@ Eigen::MatrixXd GP::pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test)
 }
 
 
-int main()
+// ONLY USE THESE MAIN FUNTIONS FOR TESTING PURPOSES
+
+
+int test_gp()
 {
 
 	// Create train location data
@@ -273,7 +276,7 @@ int main()
 		//covariance over time
 		cout << sigma_debug(i,i) << endl;
 	}
-	 */
+	*/
 
 	/* 
 	for (uint i=0; i<mu_test.rows();i++) {
@@ -310,6 +313,8 @@ int main()
 		//cout<< approx_sigma << endl;
 
 	}
-	 */
-	
+	*/
+	return 0;
 }
+
+

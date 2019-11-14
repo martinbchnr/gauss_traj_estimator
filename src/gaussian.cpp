@@ -75,8 +75,8 @@ Eigen::VectorXd MultiGaussian::sample() const
     
 
 
-
-int main() {
+ 
+int test_gaussian() {
 
 
     // TEST PROBABILITY DENSITY FUNCTION

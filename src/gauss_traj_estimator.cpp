@@ -133,7 +133,7 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosTimeArray(const Eigen:
 
 	for (int i = 0; i < time_matrix.rows(); ++i)
 	{	
-		time_msg.data.push_back(time_matrix[i]);
+		time_msg.data.push_back(time_matrix(i));
 	}
 	return time_msg;
 }
@@ -154,7 +154,7 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 		for (int j=0; j < sigma_matrix.cols(); ++j) 
 		{	
 			uint prob_index = 1*sigma_matrix.rows()*sigma_matrix.cols() + + i * sigma_matrix.cols() + j;
-			sigma_msg[prob_index] = sigma_matrix[i,j];
+			sigma_msg.data[prob_index] = sigma_matrix(i,j);
 			//multiarray(i,j,k) refers to the ith row, jth column, and kth channel.
 		}	
 	}
@@ -171,7 +171,7 @@ void GaussTrajEstimator::spin() {
 		bool lost_track = true;
         if(lost_track) {
 
-
+			cout << "hallo" << endl;
             // Switch to target tracking prediction mode
         }
         r.sleep();
