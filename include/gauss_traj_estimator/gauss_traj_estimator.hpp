@@ -7,6 +7,8 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_msgs/String.h>
+#include <nav_msgs/Path.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float32MultiArray.h>
 #include "gauss_traj_estimator/TrainTimes.h"
 #include "gp.hpp"
@@ -28,9 +30,11 @@ class GaussTrajEstimator {
   // Publishers
   ros::Publisher target_pred_path_mean_pub;
   ros::Publisher target_pred_path_cov_pub;
+  ros::Publisher evaltd_training_points_pub;
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
+  std::string evaltd_training_points_topic = "/evaltd_training_points";
 
 
   // ROS message variables to store subscribed data
@@ -50,7 +54,8 @@ class GaussTrajEstimator {
 	Eigen::MatrixXd train_poses_y;
 
   // ROS message variables to store generated data
-  geometry_msgs::PoseArray pred_path_mean_rosmsg;
+  nav_msgs::Path pred_path_mean_rosmsg;
+  visualization_msgs::MarkerArray evaltd_training_points_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
   
 
@@ -66,14 +71,16 @@ class GaussTrajEstimator {
   void SubscribeTrainTimes();
   void SubscribeTargetPose();
   void PublishPredictions();
+  void PublishTrainingData();
   void spin();
 
   // Conversion methods between ROS messages and Eigen data types
   std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);
   std_msgs::Float32MultiArray EigenToRosTimeArray(const Eigen::MatrixXd time_matrix);
-  geometry_msgs::PoseArray EigenToRosPosesArray(const Eigen::MatrixXd matrix);
+  nav_msgs::Path EigenToRosPath(const Eigen::MatrixXd matrix);
   Eigen::MatrixXd RosPosesToEigenArray(const geometry_msgs::PoseArray pos_array);
   Eigen::MatrixXd RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose);
   Eigen::MatrixXd RosTimesToEigenArray(const gauss_traj_estimator::TrainTimes times_array);
+  visualization_msgs::MarkerArray EigenToRosMarkerArray(const Eigen::MatrixXd matrix);
 };
 

@@ -9,6 +9,7 @@ using namespace std;
 GaussTrajEstimator::GaussTrajEstimator()
 {
     node_name = ros::this_node::getName();
+	
 };
 
 GaussTrajEstimator::~GaussTrajEstimator()
@@ -98,11 +99,19 @@ void GaussTrajEstimator::PublishPredictions()
 {
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_mean_topic.c_str());
-	target_pred_path_mean_pub = node.advertise<geometry_msgs::PoseArray>(target_pred_path_mean_topic, 100);
+	target_pred_path_mean_pub = node.advertise<nav_msgs::Path>(target_pred_path_mean_topic, 100);
 
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), target_pred_path_cov_topic.c_str());
 	target_pred_path_cov_pub = node.advertise<std_msgs::Float32MultiArray>(target_pred_path_cov_topic, 100);
+}
+
+void GaussTrajEstimator::PublishTrainingData()
+{
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), evaltd_training_points_topic.c_str());
+	evaltd_training_points_pub = node.advertise<visualization_msgs::MarkerArray>(evaltd_training_points_topic, 100);
+
 }
 
 
@@ -148,22 +157,56 @@ Eigen::MatrixXd GaussTrajEstimator::RosTimesToEigenArray(const gauss_traj_estima
 	return time_vector;
 }
 
-geometry_msgs::PoseArray GaussTrajEstimator::EigenToRosPosesArray(const Eigen::MatrixXd matrix)
+nav_msgs::Path GaussTrajEstimator::EigenToRosPath(const Eigen::MatrixXd matrix)
 {
 	int matrix_size = matrix.rows();
-	geometry_msgs::PoseArray pose_array;
+	nav_msgs::Path pose_path;
 
 	for (int i = 0; i < matrix_size; ++i)
 	{	
-		geometry_msgs::Pose coord;
-		coord.position.x = matrix(i,0);
-		coord.position.y = matrix(i,1);;
-		coord.position.z = 0.0;
+		geometry_msgs::PoseStamped single_pose;
+		single_pose.pose.position.x = matrix(i,0);
+		single_pose.pose.position.y = matrix(i,1);;
+		single_pose.pose.position.z = 0.0;
+		single_pose.header.frame_id = "/world";
 
-		pose_array.poses.push_back(coord);
+		pose_path.poses.push_back(single_pose);
 
 	}
-	return pose_array;
+
+	pose_path.header.stamp = ros::Time::now();
+	pose_path.header.frame_id = "/world";
+
+	return pose_path;
+}
+
+visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosMarkerArray(const Eigen::MatrixXd matrix)
+{
+	int matrix_size = matrix.rows();
+	visualization_msgs::MarkerArray markers;
+
+	for (int i = 0; i < matrix_size; ++i)
+	{	
+		visualization_msgs::Marker m;
+		m.action = 0;
+		
+		m.pose.position.x = matrix(i,0);
+		m.pose.position.y = matrix(i,1);;
+		m.pose.position.z = 0.0;
+		m.pose.orientation.w = 1.0;
+		m.header.frame_id = "/world";
+		m.scale.x = 0.25;
+		m.scale.y = 0.25;
+		m.scale.z = 0.25;
+		m.color.r = 1.0;
+		m.color.b = 1.0;
+		m.color.a = 1.0;
+		m.id = markers.markers.size();
+		m.type = visualization_msgs::Marker::CUBE;
+		markers.markers.push_back(m);
+	}
+
+	return markers;
 }
 
 Eigen::MatrixXd GaussTrajEstimator::RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose) 
@@ -214,13 +257,12 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 
 void GaussTrajEstimator::spin() {
 
-    ros::Rate r(0.1);
+    ros::Rate r(0.5);
     while(ros::ok()) {
         ros::spinOnce();
 		bool lost_track = true;
         if(lost_track) {
 
-			
 			// Create train location data
 			Eigen::MatrixXd X_train_x(5,1);
 			X_train_x << 0.0,
@@ -238,10 +280,10 @@ void GaussTrajEstimator::spin() {
 
 			Eigen::MatrixXd X_train(5,2);
 			X_train  << 0.0, 0,0,
-						1.0, 1.5,  
+						1.0, 1.0,  
 						2.0, 2.0,
-						2.5, 1.5,
-						3.0; 4.5;
+						3.0, 3.0,
+						4.0; 4.0;
 
 			// Create train time data
 			Eigen::VectorXd t_train(5);
@@ -262,11 +304,14 @@ void GaussTrajEstimator::spin() {
 
 			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
 
-			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPosesArray(mu_debug);
-			
+			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPath(mu_debug);
 			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
 			
-            // Switch to target tracking prediction mode
+			visualization_msgs::MarkerArray training_markers;
+			training_markers = GaussTrajEstimator::EigenToRosMarkerArray(X_train);
+			evaltd_training_points_pub.publish(training_markers);
+
+            
         }
         r.sleep();
     }
@@ -280,7 +325,7 @@ int main(int argc, char **argv)
     gaussian_traj_estimator.SubscribeTrainTimes();
     gaussian_traj_estimator.SubscribeTargetPose();
     gaussian_traj_estimator.PublishPredictions();
-
+	gaussian_traj_estimator.PublishTrainingData();
     gaussian_traj_estimator.spin();
     return 0;
 }

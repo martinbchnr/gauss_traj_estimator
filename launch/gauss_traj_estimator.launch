@@ -37,7 +37,8 @@
 	</node>
 
     <node pkg="gauss_traj_estimator" type="gauss_traj_estimator" name="gauss_traj_estimator" output="screen">
-
+        <param name="world_frame_id" value="/world" />
+        <param name="target_frame_id" value="/target" />
 	</node>
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gauss_traj_estimator)/rviz/rviz.rviz"/>
