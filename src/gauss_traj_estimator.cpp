@@ -220,7 +220,52 @@ void GaussTrajEstimator::spin() {
 		bool lost_track = true;
         if(lost_track) {
 
-			cout << "hallo" << endl;
+			
+			// Create train location data
+			Eigen::MatrixXd X_train_x(5,1);
+			X_train_x << 0.0,
+						1.0,
+						2.0,
+						2.5,
+						3.0;
+
+			Eigen::MatrixXd X_train_y(5,1);
+			X_train_y << 0.0,
+						1.5,
+						2.0,
+						1.5,
+						4.5;
+
+			Eigen::MatrixXd X_train(5,2);
+			X_train  << 0.0, 0,0,
+						1.0, 1.5,  
+						2.0, 2.0,
+						2.5, 1.5,
+						3.0; 4.5;
+
+			// Create train time data
+			Eigen::VectorXd t_train(5);
+			t_train << 	0.0, 
+						1.5,
+						4.0, 
+						7.5,
+						9.0;
+
+			Eigen::VectorXd t_test;
+			t_test.setLinSpaced(10,0.0,15.0);
+
+			GP gp_debug {1, 10, 0.01};
+			Eigen::MatrixXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
+
+			cout << "----- mu_debug output -----" << endl;
+			cout << mu_debug << endl;
+
+			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
+
+			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPosesArray(mu_debug);
+			
+			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
+			
             // Switch to target tracking prediction mode
         }
         r.sleep();
@@ -236,7 +281,6 @@ int main(int argc, char **argv)
     gaussian_traj_estimator.SubscribeTargetPose();
     gaussian_traj_estimator.PublishPredictions();
 
-	//GP gp_node {1, 10, 0.01};
     gaussian_traj_estimator.spin();
     return 0;
 }

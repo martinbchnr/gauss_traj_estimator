@@ -1,0 +1,1 @@
+Requires a octomap_server, octomap_ros and the cpp Eigen package 

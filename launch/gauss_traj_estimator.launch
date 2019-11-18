@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+<arg name="mav_name" default="neo11"/>
+<arg name="target_name" default="target"/>
+<arg name="world_name" default="map3"/>
+<arg name="bt_name" default="$(arg world_name)"/>
+
+	<!-- octomap server -->
+	<node pkg="octomap_server" type="octomap_tracking_server_node" name="octomap_talker" output="screen" args="$(find gauss_traj_estimator)/worlds/$(arg bt_name).bt">
+	<!-- <node pkg="octomap_server" type="octomap_tracking_server_node" name="octomap_talker" output="screen"> -->
+		<param name="resolution" value="0.25" />
+		<param name="frame_id" type="string" value="world" />
+		<param name="sensor_model/max_range" value="8.0" />
+		<param name="save_directory" value="$(optenv OCTOMAP_SAVE_DIR ./)" />
+		<param name="track_changes" value="true"/>
+		<param name="listen_changes" value="false"/>
+		<param name="topic_changes" value="/octomap_tracking_server/changeset" />
+		
+		<param name="height_map" value="false" />
+		
+		<param name="color/r" value="0.4" />
+		<param name="color/g" value="0.4" />
+		<param name="color/b" value="0.4" />
+		<param name="color/a" value="1.0" />
+		
+	
+		<param name="occupancy_max_z" value="" />
+		<param name="occupancy_min_z" value="0.2" />
+		<param name="filter_ground" value="true" />
+		<param name="base_frame_id" value="/world" />
+		
+		<!--param name="change_id_frame" value="$(arg changeIdFrame)" /-->
+		<param name="min_change_pub" value="0" />
+		<!--In case of no bt file, let's -->
+		<!-- <remap from="cloud_in" to="$(arg mav_name)/vi_sensor/camera_depth/depth/points" /> -->
+	</node>
+
+    <node pkg="gauss_traj_estimator" type="gauss_traj_estimator" name="gauss_traj_estimator" output="screen">
+
+	</node>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gauss_traj_estimator)/rviz/rviz.rviz"/>
+
+</launch>

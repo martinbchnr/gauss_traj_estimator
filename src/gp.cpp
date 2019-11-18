@@ -247,7 +247,13 @@ int test_gp()
 	GP gp_debug {1, 10, 0.01};
 
 
-	Eigen::VectorXd mu_debug = gp_debug.pred_mean(X_train_x, t_train, t_test);
+	Eigen::VectorXd mu_x = gp_debug.pred_mean(X_train_x, t_train, t_test);
+	Eigen::VectorXd mu_y = gp_debug.pred_mean(X_train_y, t_train, t_test);
+
+	Eigen::MatrixXd mu_debug;
+	mu_debug.col(0) = mu_x;
+	mu_debug.col(1) = mu_y;
+
 	Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
 
 	// SCALAR KERNEL SEEMS TO WORK
