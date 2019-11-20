@@ -257,7 +257,7 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 
 void GaussTrajEstimator::spin() {
 
-    ros::Rate r(0.5);
+    ros::Rate r(0.4);
     while(ros::ok()) {
         ros::spinOnce();
 		bool lost_track = true;
@@ -293,25 +293,60 @@ void GaussTrajEstimator::spin() {
 						7.5,
 						9.0;
 
+
+			// epsilon follow up method:
+			// use real-time velocity/orientation vector of the target  
+
 			Eigen::VectorXd t_test;
 			t_test.setLinSpaced(10,0.0,15.0);
 
+			// Initialize Gaussian process with these parameters
 			GP gp_debug {1, 10, 0.01};
+
+			// Run the mean and covariance computation using the provided test and training data
 			Eigen::MatrixXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
-
-			cout << "----- mu_debug output -----" << endl;
-			cout << mu_debug << endl;
-
 			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
+			
+			// Console output of computations to check validity
+			cout << "----- GaussTrajEstimator: debug output -----" << endl;
+			cout << mu_debug << endl;
+			cout << sigma_debug << endl;
 
+
+			// Generate ROS compatible topics out of computation results
+			// and publish topic data
+			/* 
 			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPath(mu_debug);
 			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
-			
+			 */
+
+			// Generate ROS messages out of the training data for visualization
 			visualization_msgs::MarkerArray training_markers;
 			training_markers = GaussTrajEstimator::EigenToRosMarkerArray(X_train);
 			evaltd_training_points_pub.publish(training_markers);
 
-            
+			// Use derived mean and sigma data to sample multiple new paths
+			MultiGaussian gaussian_debug(mu_debug,sigma_debug);
+    		Eigen::MatrixXd single_debug_sample = gaussian_debug.sample();
+
+			// Console output of sample results to check validity
+			cout << "----- GaussTrajEstimator: sampled paths -----" << endl;
+			cout << single_debug_sample << endl;
+
+			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPath(single_debug_sample);
+			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
+
+			/* 
+			const unsigned int points = 1000;
+			Eigen::MatrixXd sampled_sample;
+			Eigen::MatrixXd whole_data;
+			for (unsigned i = 0; i < points; i++)
+			{
+				sampled_sample = gaussian_debug.sample();
+				whole_data << whole_data, sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
+			}
+			 */
+
         }
         r.sleep();
     }

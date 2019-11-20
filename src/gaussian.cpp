@@ -21,9 +21,10 @@ typedef unsigned int uint;
 
 
 // constructor and destructor
-MultiGaussian::MultiGaussian(const Eigen::VectorXd& mu, const Eigen::MatrixXd& s) {
+MultiGaussian::MultiGaussian(const Eigen::MatrixXd& mu, const Eigen::MatrixXd& s) {
     mean = mu;
     sigma = s;
+    cout << "init MultiGaussian successful" << endl;
 };
 
 //~MultiGaussian();
@@ -42,12 +43,13 @@ double MultiGaussian::pdf(const Eigen::VectorXd& x) const
 
 
 
-// Sample from the distribution
-
-Eigen::VectorXd MultiGaussian::sample() const 
+// Sample single samples from the distribution defined using mu and sigma
+Eigen::MatrixXd MultiGaussian::sample() const 
 {
     // Use Cholesky decomposition to find upper and lower triagonal matrix of sigma
     Eigen::MatrixXd L = sigma.llt().matrixL();
+
+    cout << "cholesky successful" << endl;
 
     // Generate random numbers acc. to white Gaussian
     //normal_distribution<double> N(0.0, 1.0);
@@ -56,21 +58,30 @@ Eigen::VectorXd MultiGaussian::sample() const
     std::mt19937 gen{rd()};
     std::normal_distribution<> N{0,1};
 
-    Eigen::VectorXd z(mean.rows());
-    // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
-    for (uint k=0; k<mean.size(); k++)  
-    {
-        z[k] = N(gen);
-    }
+    cout << "initialized random engines" << endl;
+    cout << "dims of mean and sigma:" << endl;
+    cout << mean.rows() << endl;
+    cout << mean.cols() << endl;
+    cout << sigma.rows() << endl;
+    cout << sigma.cols() << endl;
 
-    Eigen::VectorXd sampled_vector(mean.rows());
+    Eigen::MatrixXd z(mean.rows(),mean.cols());
+    // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
+    for (uint k=0; k<mean.rows(); k++)  
+    {
+        z(k,0) = N(gen);
+        z(k,1) = N(gen);
+    }
+    cout << "generated random z numbers" << endl;
+
+    Eigen::MatrixXd sampled_data(mean.rows(),mean.cols());
     for (uint i=0; i<mean.size(); i++)
     {}
     
-    sampled_vector = mean + L*z;  //(L.transpose() * z).sum();
+    sampled_data = mean + L*z;  //(L.transpose() * z).sum();
     
 
-    return sampled_vector;    
+    return sampled_data;    
 }
     
 
@@ -123,7 +134,7 @@ int test_gaussian() {
     }
     // Generates a matrix of sampled points
 
-    // Calculate the mean and convariance of the produces sampled points
+    // Calculate the mean and covariance of the produces sampled points
     Eigen::VectorXd approx_mean(2);
     Eigen::MatrixXd approx_sigma(2, 2);
     approx_mean.setZero();
