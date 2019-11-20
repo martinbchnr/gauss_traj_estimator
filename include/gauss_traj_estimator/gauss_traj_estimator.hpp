@@ -31,10 +31,12 @@ class GaussTrajEstimator {
   ros::Publisher target_pred_path_mean_pub;
   ros::Publisher target_pred_path_cov_pub;
   ros::Publisher evaltd_training_points_pub;
+  ros::Publisher sampled_pred_paths_pub;
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
   std::string evaltd_training_points_topic = "/evaltd_training_points";
+  std::string sampled_pred_paths_topic = "/sampled_pred_paths";
 
 
   // ROS message variables to store subscribed data
@@ -56,6 +58,7 @@ class GaussTrajEstimator {
   // ROS message variables to store generated data
   nav_msgs::Path pred_path_mean_rosmsg;
   visualization_msgs::MarkerArray evaltd_training_points_rosmsg;
+  visualization_msgs::MarkerArray sampled_pred_path_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
   
 
@@ -72,6 +75,7 @@ class GaussTrajEstimator {
   void SubscribeTargetPose();
   void PublishPredictions();
   void PublishTrainingData();
+  void PublishSampledData();
   void spin();
 
   // Conversion methods between ROS messages and Eigen data types
@@ -82,5 +86,6 @@ class GaussTrajEstimator {
   Eigen::MatrixXd RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose);
   Eigen::MatrixXd RosTimesToEigenArray(const gauss_traj_estimator::TrainTimes times_array);
   visualization_msgs::MarkerArray EigenToRosMarkerArray(const Eigen::MatrixXd matrix);
+  visualization_msgs::MarkerArray EigenToRosSampledPathsMarkerArray(const Eigen::MatrixXd matrix, const uint sample_count);
 };
 

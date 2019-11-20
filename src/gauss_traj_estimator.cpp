@@ -114,6 +114,13 @@ void GaussTrajEstimator::PublishTrainingData()
 
 }
 
+void GaussTrajEstimator::PublishSampledData()
+{
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), sampled_pred_paths_topic.c_str());
+	sampled_pred_paths_pub = node.advertise<visualization_msgs::MarkerArray>(sampled_pred_paths_topic, 100);
+
+}
 
 
 
@@ -208,6 +215,43 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosMarkerArray(const 
 
 	return markers;
 }
+
+visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(const Eigen::MatrixXd matrix, const uint sample_count)
+{
+	// all sampled paths are vertically concatenated in the argument matrix that is why we convert them
+	// sample by sample to the marker line.
+
+	int matrix_size = matrix.rows();
+	int sample_dim = matrix_size/sample_count; // slice out 'sample-block'
+	
+	visualization_msgs::MarkerArray sampled_paths;
+
+	for (int i = 0; i < sample_count; ++i)
+	{	
+		
+		visualization_msgs::Marker one_path;
+		one_path.action = 0;
+
+		for(int j=0; j < sample_dim; ++j) {
+			geometry_msgs::Point point;
+			point.x = matrix(i*sample_dim + j,0);
+			point.y = matrix(i*sample_dim + j,1);
+			one_path.points.push_back(point);
+		}
+		
+		one_path.header.frame_id = "/world";
+		one_path.scale.x = 0.05; // only scale x is used
+		one_path.color.b = 1.0;
+		one_path.color.a = 1.0;
+		one_path.id = i;
+		one_path.type = visualization_msgs::Marker::LINE_STRIP;
+		sampled_paths.markers.push_back(one_path);
+		
+	}
+
+	return sampled_paths;
+}
+
 
 Eigen::MatrixXd GaussTrajEstimator::RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose) 
 {
@@ -315,10 +359,10 @@ void GaussTrajEstimator::spin() {
 
 			// Generate ROS compatible topics out of computation results
 			// and publish topic data
-			/* 
+			
 			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPath(mu_debug);
 			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
-			 */
+			
 
 			// Generate ROS messages out of the training data for visualization
 			visualization_msgs::MarkerArray training_markers;
@@ -327,25 +371,31 @@ void GaussTrajEstimator::spin() {
 
 			// Use derived mean and sigma data to sample multiple new paths
 			MultiGaussian gaussian_debug(mu_debug,sigma_debug);
-    		Eigen::MatrixXd single_debug_sample = gaussian_debug.sample();
-
+    		
+			/*
+			// Option A: Only one sample at a time: 	
+			Eigen::MatrixXd single_debug_sample = gaussian_debug.sample();
+			
 			// Console output of sample results to check validity
 			cout << "----- GaussTrajEstimator: sampled paths -----" << endl;
 			cout << single_debug_sample << endl;
+			*/
 
-			pred_path_mean_rosmsg = GaussTrajEstimator::EigenToRosPath(single_debug_sample);
-			target_pred_path_mean_pub.publish(pred_path_mean_rosmsg);
-
-			/* 
-			const unsigned int points = 1000;
+			// Option B: Sample a multitude of paths at a time:
+			uint sample_count = 100;
+			uint sample_dim = mu_debug.rows();
 			Eigen::MatrixXd sampled_sample;
-			Eigen::MatrixXd whole_data;
-			for (unsigned i = 0; i < points; i++)
+			Eigen::MatrixXd entire_sampled_data(sample_count*sample_dim, mu_debug.cols());
+			for (unsigned i = 0; i < sample_count; i++)
 			{
 				sampled_sample = gaussian_debug.sample();
-				whole_data << whole_data, sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
+				entire_sampled_data.block(i*sample_dim,0,sample_dim,2) = sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
 			}
-			 */
+			
+			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
+			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
+			
+			
 
         }
         r.sleep();
@@ -361,6 +411,7 @@ int main(int argc, char **argv)
     gaussian_traj_estimator.SubscribeTargetPose();
     gaussian_traj_estimator.PublishPredictions();
 	gaussian_traj_estimator.PublishTrainingData();
+	gaussian_traj_estimator.PublishSampledData();
     gaussian_traj_estimator.spin();
     return 0;
 }
