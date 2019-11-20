@@ -1,1 +1,1 @@
-Requires a octomap_server, octomap_ros and the cpp Eigen package 
+Requires the eigen3-library (C++), ros-melodic-octomap, ros-melodic-octomap-msgs, dynamicEDT3D
