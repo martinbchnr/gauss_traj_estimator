@@ -12,6 +12,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include "gauss_traj_estimator/TrainTimes.h"
 #include "gp.hpp" // inherits gaussian.hpp-class
+#include "path_eval.hpp"
 
 class GaussTrajEstimator {
 

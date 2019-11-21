@@ -24,7 +24,7 @@ typedef unsigned int uint;
 MultiGaussian::MultiGaussian(const Eigen::MatrixXd& mu, const Eigen::MatrixXd& s) {
     mean = mu;
     sigma = s;
-    cout << "init MultiGaussian successful" << endl;
+    //cout << "init MultiGaussian successful" << endl;
 };
 
 //~MultiGaussian();
@@ -49,7 +49,7 @@ Eigen::MatrixXd MultiGaussian::sample() const
     // Use Cholesky decomposition to find upper and lower triagonal matrix of sigma
     Eigen::MatrixXd L = sigma.llt().matrixL();
 
-    cout << "cholesky successful" << endl;
+    //cout << "cholesky successful" << endl;
 
     // Generate random numbers acc. to white Gaussian
     //normal_distribution<double> N(0.0, 1.0);
@@ -58,12 +58,12 @@ Eigen::MatrixXd MultiGaussian::sample() const
     std::mt19937 gen{rd()};
     std::normal_distribution<> N{0,1};
 
-    cout << "initialized random engines" << endl;
-    cout << "dims of mean and sigma:" << endl;
-    cout << mean.rows() << endl;
-    cout << mean.cols() << endl;
-    cout << sigma.rows() << endl;
-    cout << sigma.cols() << endl;
+    //cout << "initialized random machine" << endl;
+    //cout << "dims of mean and sigma:" << endl;
+    //cout << mean.rows() << endl;
+    //cout << mean.cols() << endl;
+    //cout << sigma.rows() << endl;
+    //cout << sigma.cols() << endl;
 
     Eigen::MatrixXd z(mean.rows(),mean.cols());
     // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
@@ -72,7 +72,7 @@ Eigen::MatrixXd MultiGaussian::sample() const
         z(k,0) = N(gen);
         z(k,1) = N(gen);
     }
-    cout << "generated random z numbers" << endl;
+    //cout << "generated random z numbers" << endl;
 
     Eigen::MatrixXd sampled_data(mean.rows(),mean.cols());
     for (uint i=0; i<mean.size(); i++)
@@ -104,7 +104,7 @@ int test_gaussian() {
     MultiGaussian test_gaussian(m,s);
     double prob = test_gaussian.pdf(x);
     
-    cout << prob << endl;
+    //cout << prob << endl;
 
 
 

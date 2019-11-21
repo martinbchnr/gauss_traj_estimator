@@ -1,5 +1,5 @@
 #include "./../include/gauss_traj_estimator/gauss_traj_estimator.hpp"
-
+//#include "./../include/gauss_traj_estimator/path_eval.hpp"
 
 typedef unsigned int uint;
 
@@ -395,8 +395,10 @@ void GaussTrajEstimator::spin() {
 			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 			
-			
+			PathEvaluator path_evaluator();
 
+			//path_evaluator.chechForCollision(path_evaluator.);
+			
         }
         r.sleep();
     }

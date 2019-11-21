@@ -1,7 +1,38 @@
+#include "./../include/gauss_traj_estimator/path_eval.hpp"
+
+
 // function to evaluate the EDF distance field
 
+using namespace std;
 
-void PathEvaluator::load_map(octomap::OcTree* octree_ptr){    
+
+
+PathEvaluator::PathEvaluator()
+{
+    ground_rejection_height = 0.5;
+    r_safe = 3.4;
+
+    string file_name;
+    file_name = "/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+
+    cout << "HAAALOOO" << endl;
+
+    if(file_name.substr(file_name.find_last_of(".")+1)=="bt") {
+            std::cout << "Provided octomap file: "<<file_name<< std::endl;
+            octomap::OcTree* tree = new octomap::OcTree(file_name);
+            PathEvaluator::load_map(tree);  
+    }
+
+    OcTreeNode *n = tree.search(0.4,0.5,1.3);
+			if (n) {
+				cout << "Value: " << n->getValue() << "\n"
+			}
+	
+};
+
+
+void PathEvaluator::load_map(octomap::OcTree* octree_ptr)
+{    
     // EDT map scale = octomap  
     double x,y,z;
     octree_ptr->getMetricMin(x,y,z);
@@ -22,20 +53,25 @@ void PathEvaluator::load_map(octomap::OcTree* octree_ptr){
     
     // flag 
     is_map_load = true;
-};
+    cout << is_map_load << endl;
+
+
+
+}
+
+
 
 // locate the octomap-file
 
-string file_name;
-nh.param<string>("map_file_name",file_name,"/home/jbs/catkin_ws/chomp_predict/worlds/map3.vxblx");
 
-if(file_name.substr(file_name.find_last_of(".")+1)=="bt"){
-        std::cout << "Provided octomap file: "<<file_name<< std::endl;
-        octomap::OcTree* tree = new octomap::OcTree(file_name);
-        this->chomp_wrapper.load_map(tree);  
-    }
 
-OcTreeNode *n = tree.search(x,y,z);
+
+int PathEvaluator::checkForCollision(octomap::OcTree* tree, double x, double y, double z) {
+    
+    OcTreeNode *n = tree.search(x,y,z);
 			if (n) {
 				cout << "Value: " << n->getValue() << "\n"
 			}
+
+    return 0;
+}

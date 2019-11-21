@@ -16,18 +16,25 @@ class PathEvaluator
 {
 private:
 	
-
+	DynamicEDTOctomap *edf_ptr;
 	// private edf-field regarding the octomap used 
 	
+    double ground_rejection_height;             
+    double r_safe; // safe clearance (outside of r_safe, cost = 0) 
+	double dx;
+
+	bool is_map_load = false;
     
 
 public:
-	// Create a new multivariate distribution N(mu, Sigma), with engine gen
-	PathEvaluator(octomap::OcTree* octree_ptr, const Eigen::MatrixXd& s);
+
+	PathEvaluator();
+
+	 // is map loaded 
 
 	// Return probability values
-	bool checkForCollision();
+	int checkForCollision(octomap::OcTree* tree, double x, double y, double z);
 
 	// Sample the distribution
-	void load_map() const;
+	void load_map(octomap::OcTree* octree_ptr);
 };
