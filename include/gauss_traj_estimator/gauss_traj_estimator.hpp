@@ -11,8 +11,16 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float32MultiArray.h>
 #include "gauss_traj_estimator/TrainTimes.h"
+
+#include <octomap/octomap.h>
+#include <octomap/OcTree.h>
+#include <octomap/OcTreeBase.h>
+#include <octomap/octomap_types.h>
+#include <dynamicEDT3D/dynamicEDTOctomap.h>
+
 #include "gp.hpp" // inherits gaussian.hpp-class
-#include "path_eval.hpp"
+//#include "path_eval.hpp"
+
 
 class GaussTrajEstimator {
 

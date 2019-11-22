@@ -18,6 +18,25 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(dynamicEDT3D REQUIRED)
+include_directories(${DYNAMICEDT3D_INCLUDE_DIRS})
+link_libraries(${DYNAMICEDT3D_LIBRARIES})
+
+
+#find_package(octomap REQUIRED)
+
+message(STATUS "octomap_INCLUDE_DIRS = ${octomap_INLCUDE_DIRS}")
+message(STATUS "octomap_INCLUDES = ${octomap_INLCUDES}")
+message(STATUS "octomap_LIBRARIES = ${octomap_LIBRARIES}")
+message(STATUS "octomap_LIBS = ${octomap_LIBS}")
+
+#include_directories(${OCTOMAP_INCLUDE_DIRS})
+#target_link_libraries(${OCTOMAP_LIBRARIES})
+
+
+
+#find_package(Eigen3 REQUIRED NO_MODULE)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
