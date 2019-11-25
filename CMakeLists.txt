@@ -23,17 +23,22 @@ include_directories(${DYNAMICEDT3D_INCLUDE_DIRS})
 link_libraries(${DYNAMICEDT3D_LIBRARIES})
 
 
-#find_package(octomap REQUIRED)
-
-message(STATUS "octomap_INCLUDE_DIRS = ${octomap_INLCUDE_DIRS}")
-message(STATUS "octomap_INCLUDES = ${octomap_INLCUDES}")
-message(STATUS "octomap_LIBRARIES = ${octomap_LIBRARIES}")
-message(STATUS "octomap_LIBS = ${octomap_LIBS}")
-
-#include_directories(${OCTOMAP_INCLUDE_DIRS})
-#target_link_libraries(${OCTOMAP_LIBRARIES})
+find_package(octomap REQUIRED)
 
 
+
+include_directories(${OCTOMAP_INCLUDE_DIRS})
+link_libraries(${OCTOMAP_LIBRARIES})
+
+message(STATUS "octomap_INCLUDE_DIRS = ${OCTOMAP_INCLUDE_DIRS}")
+message(STATUS "octomap_INCLUDES = ${OCTOMAP_INCLUDES}")
+message(STATUS "octomap_LIBRARIES = ${OCTOMAP_LIBRARIES}")
+message(STATUS "octomap_LIBS = ${OCTOMAP_LIBS}")
+
+#find_package(octomap_ros)
+#catkin_package(
+#    CATKIN_DEPENDS <other dependencies> octomap_ros
+#)
 
 #find_package(Eigen3 REQUIRED NO_MODULE)
 
@@ -153,7 +158,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
- add_executable(gauss_traj_estimator src/gauss_traj_estimator.cpp src/gp.cpp src/gaussian.cpp)
+ add_executable(gauss_traj_estimator src/gauss_traj_estimator.cpp src/gp.cpp src/gaussian.cpp src/path_eval.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
