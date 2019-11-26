@@ -11,6 +11,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float32MultiArray.h>
 #include "gauss_traj_estimator/TrainTimes.h"
+#include <sensor_msgs/PointCloud.h>
 
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
@@ -42,11 +43,14 @@ class GaussTrajEstimator {
   ros::Publisher target_pred_path_cov_pub;
   ros::Publisher evaltd_training_points_pub;
   ros::Publisher sampled_pred_paths_pub;
+  ros::Publisher edf_field_pub;
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
   std::string evaltd_training_points_topic = "/evaltd_training_points";
   std::string sampled_pred_paths_topic = "/sampled_pred_paths";
+  std::string edf_field_topic = "/edf_field";
+
 
 
   // ROS message variables to store subscribed data
@@ -86,6 +90,7 @@ class GaussTrajEstimator {
   void PublishPredictions();
   void PublishTrainingData();
   void PublishSampledData();
+  void PublishEDF();
   void spin();
 
   // Conversion methods between ROS messages and Eigen data types

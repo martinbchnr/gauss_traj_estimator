@@ -1,18 +1,18 @@
-
-
 #include "./../include/gauss_traj_estimator/path_eval.hpp"
+#define EPS 1e-5
 
-// function to evaluate the EDF distance field
+
+
 
 using namespace std;
-typedef unsigned int uint;
 
+typedef unsigned int uint;
 
 
 PathEvaluator::PathEvaluator()
 {
-    //ground_rejection_height = 0.5;
-    //r_safe = 3.4;
+    ground_rejection_height = 0.5;
+    r_safe = 3.4;
 
     cout << "Instance of PathEvaluator has been initialized successfully." << endl;
 
@@ -20,8 +20,8 @@ PathEvaluator::PathEvaluator()
 
 PathEvaluator::~PathEvaluator()
 {
-}
-
+};
+ 
 
 void PathEvaluator::talk() {
     cout << "Path evaluator instance is talking.." << endl;
@@ -111,44 +111,76 @@ void PathEvaluator::load_map()
 
 
 // evaluate cost at one point (see chomp_predict code: https://github.com/icsl-Jeon/chomp_predict)
-double PathEvaluator::cost_at_point(geometry_msgs::Point p){    
+double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
+{    
     
     try {
-        if (!is_problem_set)
-            throw 1;
+        
         double distance_raw = 0;
-
         
         distance_raw = edf_ptr->getDistance(octomap::point3d(p.x,p.y,p.z));
         
-
         // compute real cost from distance value 
         if (distance_raw <=0 )
-           return (-distance_raw + 0.5*cost_param.r_safe); 
-        else if((0<distance_raw) and (distance_raw < cost_param.r_safe) ){
-            return 1/(2*cost_param.r_safe)*pow(distance_raw - cost_param.r_safe,2);                
+           return (-distance_raw + 0.5*r_safe); 
+        else if((0<distance_raw) and (distance_raw < r_safe) ){
+            return 1/(2*r_safe)*pow(distance_raw - r_safe,2);                
         }else        
             return 0;
 
     }
     catch(exception e)
     {
-        std << "error in evaulating EDT value. Is edf completely loaded?" << endl;
+        cout << "error in evaulating EDT value. Is edf completely loaded?" << endl;
     }
 
 }
 
 
 
-sensor_msgs::PointCloud2 PathEvaluator::ComputeEDF() {
+sensor_msgs::PointCloud PathEvaluator::ComputeEDF() {
 
     double res = tree_ptr->getResolution(); // =dx
 
-    double field_size_x = max.x - min.x;
-    double field_size_y = max.y - min.y;
+    double x,y,z;
+    
+    tree_ptr->getMetricMin(x,y,z);
+    octomap::point3d min(x,y,z); 
+    cout << "Metric min: " << x << "," << y << "," << z << endl;
+    
+    min.z() = ground_rejection_height;
+    
+    tree_ptr->getMetricMax(x,y,z);
+    octomap::point3d max(x,y,z);
 
 
+    double field_size_x = max.x() - min.x();
+    double field_size_y = max.y() - min.y();
 
+    int len_x = field_size_x * res; 
+    int len_y = field_size_y * res;
+
+    // define ros msg data type
+    sensor_msgs::PointCloud edf_field;
+    edf_field.header.frame_id = "/world";
+    edf_field.header.stamp = ros::Time::now();
+    //edf_field.channels.name = "distance";
+
+    for (int i=0; i<len_x; ++i) {
+        for(int j=0; j<len_y; ++j) {
+
+            geometry_msgs::Point32 point3d;
+            point3d.x = i*res; 
+            point3d.y = j*res;
+            point3d.z = 0.0;
+            sensor_msgs::ChannelFloat32 intensity;
+            intensity.name = "intensity";
+            intensity.values.push_back(PathEvaluator::cost_at_point(point3d));
+            edf_field.channels.push_back(intensity);
+            edf_field.points.push_back(point3d);
+        
+        }
+    } 
 
 }
 

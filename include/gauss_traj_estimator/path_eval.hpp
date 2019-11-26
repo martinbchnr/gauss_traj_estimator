@@ -1,7 +1,22 @@
+#ifndef PATH_EVAL_H
+#define PATH_EVAL_H
+
+#include <ros/ros.h>
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <functional>
+#include <random>
+#include <vector>
+#include <string>
+#include <iostream>
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/ChannelFloat32.h>
 
 
 #include <octomap/octomap.h>
@@ -13,15 +28,13 @@
 
 using namespace std;
 
-typedef unsigned int uint;
-
-
 class PathEvaluator
 {
 
-private:
+    private:
 	
 	DynamicEDTOctomap *edf_ptr;
+    octomap::OcTree* tree_ptr ;
 	// private edf-field regarding the octomap used 
 	
     double ground_rejection_height;             
@@ -31,18 +44,23 @@ private:
 	bool is_map_load = false;
     
 
-public:
+    public:
 
 	PathEvaluator();
     ~PathEvaluator();
 
+
+
+    void load_map();
+    double cost_at_point(geometry_msgs::Point32 p);    
+    sensor_msgs::PointCloud ComputeEDF();
+
 	// Return probability values
 	int checkForCollision(octomap::OcTree* tree, double x, double y, double z);
-
     void talk();
-
     void print_query_info(octomap::point3d query, octomap::OcTreeNode* node);
-
-	// Sample the distribution
-	void load_map();
+    
+	
 };
+
+#endif

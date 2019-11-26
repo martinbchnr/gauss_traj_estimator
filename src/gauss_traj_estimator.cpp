@@ -1,12 +1,8 @@
 #include "./../include/gauss_traj_estimator/gauss_traj_estimator.hpp"
-//#include "./../include/gauss_traj_estimator/path_eval.hpp"
+#include "./../include/gauss_traj_estimator/path_eval.hpp"
 
-/* #include <octomap/octomap.h>
-#include <octomap/OcTree.h>
-#include <octomap/OcTreeBase.h>
-#include <octomap/octomap_types.h>
-#include <dynamicEDT3D/dynamicEDTOctomap.h>
- */
+
+
 typedef unsigned int uint;
 
 using namespace std;
@@ -125,6 +121,14 @@ void GaussTrajEstimator::PublishSampledData()
 
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), sampled_pred_paths_topic.c_str());
 	sampled_pred_paths_pub = node.advertise<visualization_msgs::MarkerArray>(sampled_pred_paths_topic, 100);
+
+}
+
+void GaussTrajEstimator::PublishEDF()
+{
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), edf_field_topic.c_str());
+	edf_field_pub = node.advertise<sensor_msgs::PointCloud>(edf_field_topic, 100);
 
 }
 
@@ -401,11 +405,18 @@ void GaussTrajEstimator::spin() {
 			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 			
-			//PathEvaluator path_evaluator();
+			
+			 
+			//PathEvaluator path_evaluator;
+	
+			//path_evaluator.talk();
+			//path_evaluator.load_map();
 
-			
-			//path_evaluator.chechForCollision(path_evaluator.);
-			
+			sensor_msgs::PointCloud computed_edf_field;
+			//computed_edf_field = path_evaluator.ComputeEDF();
+
+			//edf_field_pub.publish(computed_edf_field);
+ 			
         }
         r.sleep();
     }
@@ -415,21 +426,15 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "gauss_traj_estimator");
     GaussTrajEstimator gaussian_traj_estimator;
-    gaussian_traj_estimator.SubscribeTrainPoses();
+
+	gaussian_traj_estimator.SubscribeTrainPoses();
     gaussian_traj_estimator.SubscribeTrainTimes();
     gaussian_traj_estimator.SubscribeTargetPose();
-    gaussian_traj_estimator.PublishPredictions();
+	gaussian_traj_estimator.PublishPredictions();
 	gaussian_traj_estimator.PublishTrainingData();
 	gaussian_traj_estimator.PublishSampledData();
-
+	gaussian_traj_estimator.PublishEDF();
 	
-
-	
-	PathEvaluator path_evaluator;
-	
-	path_evaluator.talk();
-	path_evaluator.load_map();
- 
 	cout << "nachher" << endl;
 
     gaussian_traj_estimator.spin();
