@@ -407,14 +407,14 @@ void GaussTrajEstimator::spin() {
 			
 			
 			 
-			//PathEvaluator path_evaluator;
+			PathEvaluator path_evaluator;
 	
-			//path_evaluator.talk();
-			//path_evaluator.load_map();
+			path_evaluator.talk();
+			path_evaluator.load_map();
 
 			sensor_msgs::PointCloud computed_edf_field;
-			//computed_edf_field = path_evaluator.ComputeEDF();
-
+			path_evaluator.ComputeEDF();
+			computed_edf_field = path_evaluator.edf_field;
 			//edf_field_pub.publish(computed_edf_field);
  			
         }

@@ -17,6 +17,7 @@
 #include <nav_msgs/Path.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/ChannelFloat32.h>
+#include <geometry_msgs/Point32.h>
 
 
 #include <octomap/octomap.h>
@@ -49,11 +50,12 @@ class PathEvaluator
 	PathEvaluator();
     ~PathEvaluator();
 
-
+    sensor_msgs::PointCloud edf_field;
 
     void load_map();
-    double cost_at_point(geometry_msgs::Point32 p);    
     sensor_msgs::PointCloud ComputeEDF();
+    double cost_at_point(geometry_msgs::Point32 p);    
+    
 
 	// Return probability values
 	int checkForCollision(octomap::OcTree* tree, double x, double y, double z);

@@ -75,6 +75,8 @@ void PathEvaluator::load_map()
     
     edf_ptr->update(); // To actually compute the distance map, run:
 
+    cout << "edf generated" << endl;
+
     //This is how you can query the map
     octomap::point3d p(5.0,5.0,0.6);
     //As we don't know what the dimension of the loaded map are, we modify this point
@@ -109,7 +111,7 @@ void PathEvaluator::load_map()
 
 
 
-
+/* 
 // evaluate cost at one point (see chomp_predict code: https://github.com/icsl-Jeon/chomp_predict)
 double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
 {    
@@ -136,17 +138,19 @@ double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
 
 }
 
+ */
 
+sensor_msgs::PointCloud PathEvaluator::ComputeEDF() 
+{
 
-sensor_msgs::PointCloud PathEvaluator::ComputeEDF() {
-
+    /* 
     double res = tree_ptr->getResolution(); // =dx
 
     double x,y,z;
     
     tree_ptr->getMetricMin(x,y,z);
     octomap::point3d min(x,y,z); 
-    cout << "Metric min: " << x << "," << y << "," << z << endl;
+    cout << "[PathEvaluator::ComputeEDF]: Metric min: " << x << "," << y << "," << z << endl;
     
     min.z() = ground_rejection_height;
     
@@ -160,14 +164,21 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF() {
     int len_x = field_size_x * res; 
     int len_y = field_size_y * res;
 
+    cout << "[PathEvaluator::ComputeEDF]: len_x " << len_x << endl;
+    cout << "[PathEvaluator::ComputeEDF]: len_y " << len_y << endl;
+
     // define ros msg data type
-    sensor_msgs::PointCloud edf_field;
+    
     edf_field.header.frame_id = "/world";
     edf_field.header.stamp = ros::Time::now();
     //edf_field.channels.name = "distance";
 
+    cout << "[PathEvaluator::ComputeEDF]: edf_field defined " << endl;
+
     for (int i=0; i<len_x; ++i) {
         for(int j=0; j<len_y; ++j) {
+            
+            cout << "[PathEvaluator::ComputeEDF]: cycle field construction " << endl;
 
             geometry_msgs::Point32 point3d;
             point3d.x = i*res; 
@@ -181,6 +192,9 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF() {
         
         }
     } 
+    */
+
+    
 
 }
 
