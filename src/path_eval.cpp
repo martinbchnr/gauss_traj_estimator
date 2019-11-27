@@ -11,7 +11,7 @@ typedef unsigned int uint;
 
 PathEvaluator::PathEvaluator()
 {
-    ground_rejection_height = 0.5;
+    ground_rejection_height = -10.0;
     r_safe = 3.4;
 
     cout << "Instance of PathEvaluator has been initialized successfully." << endl;
@@ -29,7 +29,7 @@ void PathEvaluator::talk() {
 
 void PathEvaluator::load_map()
 {    
-    ground_rejection_height = 0.5;
+    ground_rejection_height = -10.0;
     r_safe = 3.4;
 
     string file_name;
@@ -111,53 +111,54 @@ void PathEvaluator::load_map()
 
 
 
-/* 
+
 // evaluate cost at one point (see chomp_predict code: https://github.com/icsl-Jeon/chomp_predict)
 double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
 {    
-    
-    try {
-        
-        double distance_raw = 0;
-        
-        distance_raw = edf_ptr->getDistance(octomap::point3d(p.x,p.y,p.z));
-        
-        // compute real cost from distance value 
-        if (distance_raw <=0 )
-           return (-distance_raw + 0.5*r_safe); 
-        else if((0<distance_raw) and (distance_raw < r_safe) ){
-            return 1/(2*r_safe)*pow(distance_raw - r_safe,2);                
-        }else        
-            return 0;
+     
+    //cout<<"[cost_at_point]: " << p.x <<","<< p.y << ","<<p.z << endl;
 
+    octomap::point3d octomap_point(p.x,p.y,p.z);
+    float distance_raw;
+    octomap::point3d closestObst;
+
+    edf_ptr->getDistanceAndClosestObstacle(octomap_point, distance_raw, closestObst);
+    
+    // compute real cost from distance value 
+    if (distance_raw <=0 ) {
+        return (-distance_raw + 0.5*r_safe); 
+    }   
+    else if ((0<distance_raw) and (distance_raw < r_safe) ) {
+        return 1/(2*r_safe)*pow(distance_raw - r_safe,2);                
     }
-    catch(exception e)
-    {
-        cout << "error in evaulating EDT value. Is edf completely loaded?" << endl;
-    }
+    else {
+        return 0;
+    }     
 
 }
 
- */
+
 
 sensor_msgs::PointCloud PathEvaluator::ComputeEDF() 
 {
+    string file_name;
+    file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+    octomap::OcTree* tree_ptr = new octomap::OcTree(file_name);
 
-    /* 
     double res = tree_ptr->getResolution(); // =dx
 
     double x,y,z;
     
     tree_ptr->getMetricMin(x,y,z);
     octomap::point3d min(x,y,z); 
-    cout << "[PathEvaluator::ComputeEDF]: Metric min: " << x << "," << y << "," << z << endl;
+    //cout << "[PathEvaluator::ComputeEDF]: Metric min: " << x << "," << y << "," << z << endl;
     
     min.z() = ground_rejection_height;
     
     tree_ptr->getMetricMax(x,y,z);
     octomap::point3d max(x,y,z);
 
-
+/* 
     double field_size_x = max.x() - min.x();
     double field_size_y = max.y() - min.y();
 
@@ -166,35 +167,55 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF()
 
     cout << "[PathEvaluator::ComputeEDF]: len_x " << len_x << endl;
     cout << "[PathEvaluator::ComputeEDF]: len_y " << len_y << endl;
+     */
 
     // define ros msg data type
+    sensor_msgs::PointCloud edf_field;
+
+    float scaler = 10;
+
+    edf_field.points.resize(pow(scaler,2)*max.x()*max.y());
+    edf_field.channels.resize(1);
+    edf_field.channels[0].name = "intensity";
+    edf_field.channels[0].values.resize(pow(scaler,2)*max.x()*max.y());
     
     edf_field.header.frame_id = "/world";
     edf_field.header.stamp = ros::Time::now();
     //edf_field.channels.name = "distance";
 
-    cout << "[PathEvaluator::ComputeEDF]: edf_field defined " << endl;
+    // cout << "[PathEvaluator::ComputeEDF]: edf_field defined " << endl;
+    
+    
 
-    for (int i=0; i<len_x; ++i) {
-        for(int j=0; j<len_y; ++j) {
+    for (int i=0; i<max.x()*scaler; ++i) {
+        for(int j=0; j<max.y()*scaler; ++j) {
             
-            cout << "[PathEvaluator::ComputeEDF]: cycle field construction " << endl;
-
+            float a = i / scaler;
+            float b = j / scaler;
+        
             geometry_msgs::Point32 point3d;
-            point3d.x = i*res; 
-            point3d.y = j*res;
-            point3d.z = 0.0;
+            //for evaluation
+            point3d.x = a; 
+            point3d.y = b;
+            point3d.z = 0.5;
             sensor_msgs::ChannelFloat32 intensity;
             intensity.name = "intensity";
-            intensity.values.push_back(PathEvaluator::cost_at_point(point3d));
-            edf_field.channels.push_back(intensity);
-            edf_field.points.push_back(point3d);
+            
+            //cout << "[PathEvaluator::ComputeEDF]: cost:" << PathEvaluator::cost_at_point(point3d) << endl;
+            
+            edf_field.channels[0].values.push_back(PathEvaluator::cost_at_point(point3d));
+            
+            //for visualization
+            geometry_msgs::Point32 point3dvis;
+            point3dvis.x = a; 
+            point3dvis.y = b;
+            point3dvis.z = 0.0;
+            edf_field.points.push_back(point3dvis);
         
         }
     } 
-    */
-
     
+    return edf_field;
 
 }
 
@@ -205,9 +226,6 @@ void PathEvaluator::print_query_info(octomap::point3d query, octomap::OcTreeNode
         else 
         cout << "occupancy probability at " << query << ":\t is unknown" << endl;    
 }
-
-
-// locate the octomap-file
 
 
 

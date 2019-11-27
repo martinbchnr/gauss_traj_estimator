@@ -92,6 +92,7 @@ class GaussTrajEstimator {
   void PublishSampledData();
   void PublishEDF();
   void spin();
+  void GenerateEDFplot();
 
   // Conversion methods between ROS messages and Eigen data types
   std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);

@@ -311,6 +311,8 @@ std_msgs::Float32MultiArray GaussTrajEstimator::EigenToRosSigmaArray(const Eigen
 
 void GaussTrajEstimator::spin() {
 
+	bool first_run = true;
+
     ros::Rate r(0.4);
     while(ros::ok()) {
         ros::spinOnce();
@@ -404,23 +406,70 @@ void GaussTrajEstimator::spin() {
 			
 			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
-			
-			
-			 
-			PathEvaluator path_evaluator;
-	
-			path_evaluator.talk();
-			path_evaluator.load_map();
 
-			sensor_msgs::PointCloud computed_edf_field;
-			path_evaluator.ComputeEDF();
-			computed_edf_field = path_evaluator.edf_field;
-			//edf_field_pub.publish(computed_edf_field);
+
+
+			/*  
+			// Generate one instance of the PathEvaluator class to compute the distance field for plotting
+			PathEvaluator path_evaluator;
+			
+			// Give activity notice and compute the distance field after import of the octomap file
+			path_evaluator.talk();
+			
+
+			
+
+			// Use some condition to only publish the discretized EDF plot
+			// when a certain condition is satisfied (e.g change in the environment
+			// or here: only on first execution)
+			if(first_run) {
+				ros::Duration(5.0).sleep();
+
+				path_evaluator.load_map();
+				// compute the discretized Euclidean distance field for plotting and publish it
+				sensor_msgs::PointCloud computed_edf_field;
+				computed_edf_field = path_evaluator.ComputeEDF();
+
+				edf_field_pub.publish(computed_edf_field);
+		
+				first_run = false;
+			}
+			 */
  			
         }
         r.sleep();
     }
 }
+
+
+void GaussTrajEstimator::GenerateEDFplot() {
+	
+	// Generate one instance of the PathEvaluator class to compute the distance field for plotting
+	PathEvaluator path_evaluator;
+	
+	// Give activity notice and compute the distance field after import of the octomap file
+	path_evaluator.talk();
+	
+
+	
+
+	// Use some condition to only publish the discretized EDF plot
+	// when a certain condition is satisfied (e.g change in the environment
+	// or here: only on first execution)
+			
+	ros::Duration(5.0).sleep();
+
+	path_evaluator.load_map();
+	// compute the discretized Euclidean distance field for plotting and publish it
+	sensor_msgs::PointCloud computed_edf_field;
+	computed_edf_field = path_evaluator.ComputeEDF();
+
+	edf_field_pub.publish(computed_edf_field);
+
+}
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -435,8 +484,12 @@ int main(int argc, char **argv)
 	gaussian_traj_estimator.PublishSampledData();
 	gaussian_traj_estimator.PublishEDF();
 	
-	cout << "nachher" << endl;
+	cout << "Subscribers and Publishers intialized" << endl;
 
+	// Plot Euclidean distance field
+	gaussian_traj_estimator.GenerateEDFplot();
+
+	
     gaussian_traj_estimator.spin();
     return 0;
 }

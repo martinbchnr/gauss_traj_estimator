@@ -34,8 +34,8 @@ class PathEvaluator
 
     private:
 	
-	DynamicEDTOctomap *edf_ptr;
-    octomap::OcTree* tree_ptr ;
+	DynamicEDTOctomap* edf_ptr = NULL; 
+    octomap::OcTree* tree_ptr = NULL;
 	// private edf-field regarding the octomap used 
 	
     double ground_rejection_height;             
@@ -50,7 +50,7 @@ class PathEvaluator
 	PathEvaluator();
     ~PathEvaluator();
 
-    sensor_msgs::PointCloud edf_field;
+    //sensor_msgs::PointCloud edf_field;
 
     void load_map();
     sensor_msgs::PointCloud ComputeEDF();

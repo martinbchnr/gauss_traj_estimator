@@ -370,6 +370,19 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/PointCloud
+      Enabled: true
+      Topic: /edf_field
+      Name: Euclidean Distance Field
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+      Style: Points
+      Size (m): 0.07
+      Alpha: 0.8
+      Use rainbow: true
+      Invert Rainbow: true
   Enabled: true
   Global Options:
     Background Color: 202; 202; 202
