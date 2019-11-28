@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_msgs/String.h>
@@ -43,12 +44,14 @@ class GaussTrajEstimator {
   ros::Publisher target_pred_path_cov_pub;
   ros::Publisher evaltd_training_points_pub;
   ros::Publisher sampled_pred_paths_pub;
+  ros::Publisher valid_sampled_pred_paths_pub;
   ros::Publisher edf_field_pub;
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
   std::string evaltd_training_points_topic = "/evaltd_training_points";
   std::string sampled_pred_paths_topic = "/sampled_pred_paths";
+  std::string valid_sampled_pred_paths_topic = "/valid_sampled_pred_paths";
   std::string edf_field_topic = "/edf_field";
 
 
@@ -73,6 +76,7 @@ class GaussTrajEstimator {
   nav_msgs::Path pred_path_mean_rosmsg;
   visualization_msgs::MarkerArray evaltd_training_points_rosmsg;
   visualization_msgs::MarkerArray sampled_pred_path_rosmsg;
+  visualization_msgs::MarkerArray valid_sampled_pred_path_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
   
 
@@ -93,7 +97,7 @@ class GaussTrajEstimator {
   void PublishEDF();
   void spin();
   void GenerateEDFplot();
-
+  
   // Conversion methods between ROS messages and Eigen data types
   std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);
   std_msgs::Float32MultiArray EigenToRosTimeArray(const Eigen::MatrixXd time_matrix);

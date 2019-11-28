@@ -23,5 +23,6 @@ public:
 
 	// Sample the distribution
 	Eigen::MatrixXd sample() const;
+	Eigen::MatrixXd approximmate() const;
 };
 

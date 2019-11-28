@@ -14,6 +14,8 @@ PathEvaluator::PathEvaluator()
     ground_rejection_height = -10.0;
     r_safe = 3.4;
 
+    
+
     cout << "Instance of PathEvaluator has been initialized successfully." << endl;
 
 };
@@ -134,6 +136,67 @@ double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
     else {
         return 0;
     }     
+    
+
+}
+
+// evaluate cost at one point (see chomp_predict code: https://github.com/icsl-Jeon/chomp_predict)
+PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path)
+{    
+    
+    
+     
+    //cout<<"[cost_at_point]: " << p.x <<","<< p.y << ","<<p.z << endl;
+
+    uint sample_dim = sample_path.rows();
+
+    double sum_path_cost = 0;
+				
+    geometry_msgs::Point32 sample_point;
+
+
+    bool rejected = false;
+    
+    //  go through all points of the path
+    for (uint j=0; j < sample_dim; ++j) {
+
+        sample_point.x = sample_path(j,0);
+        sample_point.y = sample_path(j,1);
+        sample_point.z = 0.5;
+
+        double point_cost;
+
+        // distance query
+        octomap::point3d octomap_point(sample_point.x,sample_point.y,sample_point.z);
+        float distance_raw;
+        octomap::point3d closestObst;
+
+        edf_ptr->getDistanceAndClosestObstacle(octomap_point, distance_raw, closestObst);
+    
+
+        if ((distance_raw < 0.0) or (distance_raw == 0)) {
+            point_cost = 1000;
+            rejected = true;
+        }
+        else {
+            point_cost = 1/distance_raw;
+        }
+
+        sum_path_cost += point_cost;
+
+        cout << "COST OF POINT: \n" << point_cost << endl;
+    }
+    
+    PathEvaluator::eval_info path_evaluation;
+    path_evaluation.rej = rejected;
+    path_evaluation.cost = sum_path_cost/sample_dim;
+    
+
+
+    return path_evaluation;
+    cout << "COST OF PATH: \n" << sum_path_cost << endl;
+    
+    
 
 }
 

@@ -122,6 +122,10 @@ void GaussTrajEstimator::PublishSampledData()
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), sampled_pred_paths_topic.c_str());
 	sampled_pred_paths_pub = node.advertise<visualization_msgs::MarkerArray>(sampled_pred_paths_topic, 100);
 
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), valid_sampled_pred_paths_topic.c_str());
+	valid_sampled_pred_paths_pub = node.advertise<visualization_msgs::MarkerArray>(valid_sampled_pred_paths_topic, 100);
+
+
 }
 
 void GaussTrajEstimator::PublishEDF()
@@ -334,30 +338,37 @@ void GaussTrajEstimator::spin() {
 						1.5,
 						4.5;
 
-			Eigen::MatrixXd X_train(5,2);
-			X_train  << 0.0, 0,0,
-						1.0, 1.0,  
-						2.0, 2.0,
-						3.0, 3.0,
-						4.0; 4.0;
+			Eigen::MatrixXd X_train(8,2);
+			X_train  << 0.0, 0.0,
+						4.0, 1.0,  
+						3.5, 4.0,
+						7.0, 8.0,
+						8.3, 6.0,
+						9.3, 3.0,
+						11.5, 7.0,
+						17.0, 8.0;
 
 			// Create train time data
-			Eigen::VectorXd t_train(5);
+			Eigen::VectorXd t_train(8);
 			t_train << 	0.0, 
-						1.5,
-						4.0, 
-						7.5,
-						9.0;
+						2.0,
+						4.0,
+						6.5,
+						8.5, 
+						10.5,
+						13.5,
+						17.0;
 
 
 			// epsilon follow up method:
 			// use real-time velocity/orientation vector of the target  
 
 			Eigen::VectorXd t_test;
-			t_test.setLinSpaced(10,0.0,15.0);
+			t_test.setLinSpaced(200,0.0,17.5);
 
 			// Initialize Gaussian process with these parameters
-			GP gp_debug {1, 10, 0.01};
+			// {signal var, length scale, noise var}
+			GP gp_debug {1.8, 2.5, 0.1}; // default: {g=1, l=10, 0.01} 
 
 			// Run the mean and covariance computation using the provided test and training data
 			Eigen::MatrixXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
@@ -384,6 +395,8 @@ void GaussTrajEstimator::spin() {
 			// Use derived mean and sigma data to sample multiple new paths
 			MultiGaussian gaussian_debug(mu_debug,sigma_debug);
     		
+
+
 			/*
 			// Option A: Only one sample at a time: 	
 			Eigen::MatrixXd single_debug_sample = gaussian_debug.sample();
@@ -393,48 +406,82 @@ void GaussTrajEstimator::spin() {
 			cout << single_debug_sample << endl;
 			*/
 
+			
+			
+
+			uint valid_paths_counter = 0;
+			PathEvaluator path_cost_eval;
+			path_cost_eval.load_map();
+
 			// Option B: Sample a multitude of paths at a time:
-			uint sample_count = 100;
+			uint sample_count = 300;
 			uint sample_dim = mu_debug.rows();
+
+			Eigen::MatrixXd path_costs(sample_count, 1);
+
 			Eigen::MatrixXd sampled_sample;
 			Eigen::MatrixXd entire_sampled_data(sample_count*sample_dim, mu_debug.cols());
-			for (unsigned i = 0; i < sample_count; i++)
+			
+			
+			Eigen::MatrixXd valid_sampled_idx(sample_count,1);
+
+			// Go through sampled paths and evaluate cost
+			for (uint i = 0; i < sample_count; i++)
 			{
 				sampled_sample = gaussian_debug.sample();
-				entire_sampled_data.block(i*sample_dim,0,sample_dim,2) = sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
+				entire_sampled_data.block(i*sample_dim,0,sample_dim,mu_debug.cols()) = sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
+				
+				PathEvaluator::eval_info result;
+    			result = path_cost_eval.cost_of_path(sampled_sample);
+				path_costs(i) = result.cost;
+
+				if (result.rej == false) {
+					
+					valid_paths_counter += 1;
+					valid_sampled_idx(i,0) = 1;
+					
+					cout << "PATH NO. " << i << "IS VALID" << endl;
+					
+				}
+				else {
+					valid_sampled_idx(i,0) = 0;	
+				}
+
 			}
 			
+			
+			Eigen::MatrixXd valid_sampled_data(valid_paths_counter*sample_dim,mu_debug.cols());
+
+			uint next_row_idx = 0;
+			
+			for (uint k = 0; k < sample_count; k++)
+			{
+				
+				if (valid_sampled_idx(k,0)==1) {
+					valid_sampled_data.block(next_row_idx,0,sample_dim,mu_debug.cols()) = entire_sampled_data.block(k*sample_dim,0,sample_dim,mu_debug.cols());
+					next_row_idx += sample_dim;
+				}
+				
+
+			}
+
+			cout << "LENGTH OF VALID SAMPLED DATA ARRAY:" << valid_sampled_data.rows()/sample_dim  << endl;
+
+			
+			cout << "% OF VALID PATHS:" << (float)valid_paths_counter / (float)sample_count  << endl;
+
+			
+			cout << "COSTS OF SAMPLED PATHS: \n" << path_costs << endl;
+			
+			
+
 			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 
+			valid_sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(valid_sampled_data, valid_paths_counter);
+			valid_sampled_pred_paths_pub.publish(valid_sampled_pred_path_rosmsg);
 
-
-			/*  
-			// Generate one instance of the PathEvaluator class to compute the distance field for plotting
-			PathEvaluator path_evaluator;
-			
-			// Give activity notice and compute the distance field after import of the octomap file
-			path_evaluator.talk();
-			
-
-			
-
-			// Use some condition to only publish the discretized EDF plot
-			// when a certain condition is satisfied (e.g change in the environment
-			// or here: only on first execution)
-			if(first_run) {
-				ros::Duration(5.0).sleep();
-
-				path_evaluator.load_map();
-				// compute the discretized Euclidean distance field for plotting and publish it
-				sensor_msgs::PointCloud computed_edf_field;
-				computed_edf_field = path_evaluator.ComputeEDF();
-
-				edf_field_pub.publish(computed_edf_field);
-		
-				first_run = false;
-			}
-			 */
+			cout << "VALID SAMPLED PATHS: \n" << valid_sampled_data << endl;
  			
         }
         r.sleep();
@@ -457,7 +504,7 @@ void GaussTrajEstimator::GenerateEDFplot() {
 	// when a certain condition is satisfied (e.g change in the environment
 	// or here: only on first execution)
 			
-	ros::Duration(5.0).sleep();
+	ros::Duration(3.0).sleep();
 
 	path_evaluator.load_map();
 	// compute the discretized Euclidean distance field for plotting and publish it
@@ -488,6 +535,9 @@ int main(int argc, char **argv)
 
 	// Plot Euclidean distance field
 	gaussian_traj_estimator.GenerateEDFplot();
+
+
+	
 
 	
     gaussian_traj_estimator.spin();

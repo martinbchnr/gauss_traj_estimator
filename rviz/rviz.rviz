@@ -340,12 +340,12 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.15000000596046448
+      Line Width: 0.2
       Name: gauss_traj_estimator_mean_path
       Offset:
         X: 0
         Y: 0
-        Z: 0
+        Z: 0.02
       Pose Color: 255; 85; 255
       Pose Style: None
       Radius: 0.029999999329447746
@@ -383,6 +383,14 @@ Visualization Manager:
       Alpha: 0.8
       Use rainbow: true
       Invert Rainbow: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sampled_pred_paths
+      Name: Sampled Predictions
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 202; 202; 202

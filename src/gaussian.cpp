@@ -56,7 +56,7 @@ Eigen::MatrixXd MultiGaussian::sample() const
     
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<> N{0,1};
+    std::normal_distribution<> N{0,6};
 
     //cout << "initialized random machine" << endl;
     //cout << "dims of mean and sigma:" << endl;
@@ -82,6 +82,11 @@ Eigen::MatrixXd MultiGaussian::sample() const
     
 
     return sampled_data;    
+}
+
+Eigen::MatrixXd MultiGaussian::approximmate() const
+{
+
 }
     
 

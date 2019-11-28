@@ -42,10 +42,18 @@ class PathEvaluator
     double r_safe; // safe clearance (outside of r_safe, cost = 0) 
 	double dx;
 
+    
 	bool is_map_load = false;
     
 
     public:
+
+    
+    struct eval_info {
+        bool rej;
+        double cost;
+    };
+
 
 	PathEvaluator();
     ~PathEvaluator();
@@ -56,6 +64,7 @@ class PathEvaluator
     sensor_msgs::PointCloud ComputeEDF();
     double cost_at_point(geometry_msgs::Point32 p);    
     
+    PathEvaluator::eval_info cost_of_path(Eigen::MatrixXd sample_path);
 
 	// Return probability values
 	int checkForCollision(octomap::OcTree* tree, double x, double y, double z);
