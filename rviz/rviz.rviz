@@ -391,6 +391,37 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Alpha: 0.5
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 190;90; 255
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.25
+      Name: gauss_traj_estimator_mean_path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.02
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /valid_pred_path_mean
+      Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /valid_sampled_pred_paths
+      Name: Sampled Predictions
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 202; 202; 202

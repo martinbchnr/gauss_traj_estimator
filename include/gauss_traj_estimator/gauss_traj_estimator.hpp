@@ -45,6 +45,7 @@ class GaussTrajEstimator {
   ros::Publisher evaltd_training_points_pub;
   ros::Publisher sampled_pred_paths_pub;
   ros::Publisher valid_sampled_pred_paths_pub;
+  ros::Publisher valid_pred_path_mean_pub;
   ros::Publisher edf_field_pub;
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
@@ -52,6 +53,7 @@ class GaussTrajEstimator {
   std::string evaltd_training_points_topic = "/evaltd_training_points";
   std::string sampled_pred_paths_topic = "/sampled_pred_paths";
   std::string valid_sampled_pred_paths_topic = "/valid_sampled_pred_paths";
+  std::string valid_pred_path_mean_topic = "/valid_pred_path_mean";
   std::string edf_field_topic = "/edf_field";
 
 
@@ -72,12 +74,15 @@ class GaussTrajEstimator {
   Eigen::MatrixXd train_poses_x;
 	Eigen::MatrixXd train_poses_y;
 
+
   // ROS message variables to store generated data
   nav_msgs::Path pred_path_mean_rosmsg;
   visualization_msgs::MarkerArray evaltd_training_points_rosmsg;
   visualization_msgs::MarkerArray sampled_pred_path_rosmsg;
   visualization_msgs::MarkerArray valid_sampled_pred_path_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
+  nav_msgs::Path valid_mean_path_rosmsg;
+  nav_msgs::Path latest_valid_mean_path_rosmsg;
   
 
   public:
@@ -94,9 +99,10 @@ class GaussTrajEstimator {
   void PublishPredictions();
   void PublishTrainingData();
   void PublishSampledData();
+  void PublishValidData();
   void PublishEDF();
   void spin();
-  void GenerateEDFplot();
+  void GenerateEDF();
   
   // Conversion methods between ROS messages and Eigen data types
   std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);
@@ -107,5 +113,7 @@ class GaussTrajEstimator {
   Eigen::MatrixXd RosTimesToEigenArray(const gauss_traj_estimator::TrainTimes times_array);
   visualization_msgs::MarkerArray EigenToRosMarkerArray(const Eigen::MatrixXd matrix);
   visualization_msgs::MarkerArray EigenToRosSampledPathsMarkerArray(const Eigen::MatrixXd matrix, const uint sample_count);
+
+  PathEvaluator path_cost_eval;
 };
 

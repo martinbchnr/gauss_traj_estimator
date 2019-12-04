@@ -162,7 +162,7 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 
         sample_point.x = sample_path(j,0);
         sample_point.y = sample_path(j,1);
-        sample_point.z = 0.5;
+        sample_point.z = 0.8;
 
         double point_cost;
 
@@ -184,7 +184,7 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 
         sum_path_cost += point_cost;
 
-        cout << "COST OF POINT: \n" << point_cost << endl;
+        //cout << "COST OF POINT: \n" << point_cost << endl;
     }
     
     PathEvaluator::eval_info path_evaluation;
@@ -194,7 +194,7 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 
 
     return path_evaluation;
-    cout << "COST OF PATH: \n" << sum_path_cost << endl;
+    //cout << "COST OF PATH: \n" << sum_path_cost << endl;
     
     
 

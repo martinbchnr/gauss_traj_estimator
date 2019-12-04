@@ -27,7 +27,12 @@ MultiGaussian::MultiGaussian(const Eigen::MatrixXd& mu, const Eigen::MatrixXd& s
     //cout << "init MultiGaussian successful" << endl;
 };
 
-//~MultiGaussian();
+MultiGaussian::~MultiGaussian()
+{
+
+}
+
+
 
 // Density function
 double MultiGaussian::pdf(const Eigen::VectorXd& x) const 
@@ -84,8 +89,27 @@ Eigen::MatrixXd MultiGaussian::sample() const
     return sampled_data;    
 }
 
-Eigen::MatrixXd MultiGaussian::approximmate() const
+Eigen::MatrixXd MultiGaussian::approximateDim(Eigen::MatrixXd data, uint points) const
 {
+    
+    // Calculate the mean and covariance of the produces sampled points
+    Eigen::VectorXd approx_mean(2);
+    Eigen::MatrixXd approx_sigma(2, 2);
+    approx_mean.setZero();
+    approx_sigma.setZero();
+
+    for (unsigned int i = 0; i < points; i++)
+    {
+        approx_mean  = approx_mean  + data.col(i);
+        approx_sigma = approx_sigma + data.col(i) * data.col(i).transpose();
+    }
+
+    approx_mean  = approx_mean  / static_cast<double>(points);
+    approx_sigma = approx_sigma / static_cast<double>(points);
+    approx_sigma = approx_sigma - approx_mean * approx_mean.transpose();
+
+    cout<< approx_mean << endl;
+    cout<< approx_sigma << endl;
 
 }
     

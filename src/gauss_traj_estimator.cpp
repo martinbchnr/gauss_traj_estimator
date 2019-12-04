@@ -128,6 +128,14 @@ void GaussTrajEstimator::PublishSampledData()
 
 }
 
+void GaussTrajEstimator::PublishValidData()
+{
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), valid_pred_path_mean_topic.c_str());
+	valid_pred_path_mean_pub = node.advertise<nav_msgs::Path>(valid_pred_path_mean_topic, 100);
+
+}
+
 void GaussTrajEstimator::PublishEDF()
 {
 
@@ -338,33 +346,29 @@ void GaussTrajEstimator::spin() {
 						1.5,
 						4.5;
 
-			Eigen::MatrixXd X_train(8,2);
+			Eigen::MatrixXd X_train(6,2);
 			X_train  << 0.0, 0.0,
-						4.0, 1.0,  
-						3.5, 4.0,
-						7.0, 8.0,
-						8.3, 6.0,
-						9.3, 3.0,
-						11.5, 7.0,
-						17.0, 8.0;
+						0.5, 0.0,
+						3.4578,4.1620,  
+						6.7478, 8.0200,
+						8.3223, 3.9896,
+						11.4981, 8.0515;
 
 			// Create train time data
-			Eigen::VectorXd t_train(8);
-			t_train << 	0.0, 
-						2.0,
-						4.0,
-						6.5,
-						8.5, 
-						10.5,
-						13.5,
-						17.0;
+			Eigen::VectorXd t_train(6);
+			t_train << 	0.0,
+						0.5, 
+						 3.0,
+						5.0,
+						7.0,
+						10.0;
 
 
 			// epsilon follow up method:
 			// use real-time velocity/orientation vector of the target  
 
 			Eigen::VectorXd t_test;
-			t_test.setLinSpaced(200,0.0,17.5);
+			t_test.setLinSpaced(200,0.0,t_train(t_train.rows()-1));
 
 			// Initialize Gaussian process with these parameters
 			// {signal var, length scale, noise var}
@@ -410,11 +414,14 @@ void GaussTrajEstimator::spin() {
 			
 
 			uint valid_paths_counter = 0;
-			PathEvaluator path_cost_eval;
-			path_cost_eval.load_map();
+			
+			 
+			//PathEvaluator path_cost_eval;
+			
+ 			
 
 			// Option B: Sample a multitude of paths at a time:
-			uint sample_count = 300;
+			uint sample_count = 500;
 			uint sample_dim = mu_debug.rows();
 
 			Eigen::MatrixXd path_costs(sample_count, 1);
@@ -446,7 +453,7 @@ void GaussTrajEstimator::spin() {
 				else {
 					valid_sampled_idx(i,0) = 0;	
 				}
-
+				
 			}
 			
 			
@@ -465,23 +472,80 @@ void GaussTrajEstimator::spin() {
 
 			}
 
-			cout << "LENGTH OF VALID SAMPLED DATA ARRAY:" << valid_sampled_data.rows()/sample_dim  << endl;
+			Eigen::MatrixXd valid_mean_path(sample_dim,mu_debug.cols());
+
+		
+			for (uint k = 0; k < sample_dim; k++) {
+				// per path-point
+				Eigen::MatrixXd mean_per_dim(1,mu_debug.cols());
+
+				double x_cumulated = 0.0;
+				double y_cumulated = 0.0;
+
+				//add up coordinates of all samples
+				for (uint l = 0; l < valid_paths_counter; l++) {
+					x_cumulated += valid_sampled_data(l*sample_dim+k,0);
+					y_cumulated += valid_sampled_data(l*sample_dim+k,1);
+				}
+
+				if (valid_paths_counter > 0) {
+					mean_per_dim(0,0) = x_cumulated/valid_paths_counter;
+					mean_per_dim(0,1) = y_cumulated/valid_paths_counter;
+				}
+				else {
+					mean_per_dim(0,0) = 0.0;
+					mean_per_dim(0,1) = 0.0;
+				}
+				
+				valid_mean_path(k,0) = mean_per_dim(0,0);
+				valid_mean_path(k,1) = mean_per_dim(0,1);	
+			}
+
+			
+
+			// check if mean path does not collide with any walls:
+			PathEvaluator::eval_info result;
+			result = path_cost_eval.cost_of_path(valid_mean_path);
+			if (result.rej == false) {
+				cout << "MEAN PATH IS VALID" << endl;
+				valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(valid_mean_path);
+				valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
+				latest_valid_mean_path_rosmsg = valid_mean_path_rosmsg;
+			}
+			else {
+				cout << "MEAN PATH NOT VALID, INCREASE SAMPLE NUMBER OR CHECK FOR DIVERGENCE OF PATHS." << endl;
+				valid_pred_path_mean_pub.publish(latest_valid_mean_path_rosmsg );
+			}
+
+			
+
+			//cout << "LENGTH OF VALID SAMPLED DATA ARRAY:" << valid_sampled_data.rows()/sample_dim  << endl;
 
 			
 			cout << "% OF VALID PATHS:" << (float)valid_paths_counter / (float)sample_count  << endl;
 
 			
-			cout << "COSTS OF SAMPLED PATHS: \n" << path_costs << endl;
+			//cout << "COSTS OF SAMPLED PATHS: \n" << path_costs << endl;
 			
 			
 
 			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 
-			valid_sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(valid_sampled_data, valid_paths_counter);
-			valid_sampled_pred_paths_pub.publish(valid_sampled_pred_path_rosmsg);
+			
+			if(valid_paths_counter > 0 ) {
+				valid_sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(valid_sampled_data, valid_paths_counter);
+				valid_sampled_pred_paths_pub.publish(valid_sampled_pred_path_rosmsg);
 
-			cout << "VALID SAMPLED PATHS: \n" << valid_sampled_data << endl;
+				cout << "VALID SAMPLED PATHS: \n" << valid_sampled_data << endl;
+			}
+			else {
+				cout << "NO VALID SAMPLE PATHS, INCREASE NUMBER OF SAMPLES";
+			}
+			
+
+ 
+
  			
         }
         r.sleep();
@@ -489,14 +553,13 @@ void GaussTrajEstimator::spin() {
 }
 
 
-void GaussTrajEstimator::GenerateEDFplot() {
+void GaussTrajEstimator::GenerateEDF() {
 	
 	// Generate one instance of the PathEvaluator class to compute the distance field for plotting
-	PathEvaluator path_evaluator;
+	PathEvaluator edf_plot;
 	
 	// Give activity notice and compute the distance field after import of the octomap file
-	path_evaluator.talk();
-	
+	edf_plot.talk();
 
 	
 
@@ -504,17 +567,28 @@ void GaussTrajEstimator::GenerateEDFplot() {
 	// when a certain condition is satisfied (e.g change in the environment
 	// or here: only on first execution)
 			
-	ros::Duration(3.0).sleep();
+	ros::Duration(2.0).sleep();
 
-	path_evaluator.load_map();
+	edf_plot.load_map();
 	// compute the discretized Euclidean distance field for plotting and publish it
 	sensor_msgs::PointCloud computed_edf_field;
-	computed_edf_field = path_evaluator.ComputeEDF();
+	computed_edf_field = edf_plot.ComputeEDF();
 
 	edf_field_pub.publish(computed_edf_field);
 
+	// also load the map for the path evaluator
+	path_cost_eval.load_map();
+
 }
 
+/* void GaussTrajEstimator::InitializeGP() {
+	
+	// Initialize Gaussian process with these parameters
+	// {signal var, length scale, noise var}
+	GP gp_debug {1.8, 2.5, 0.1}; // default: {g=1, l=10, 0.01} 
+
+}
+ */
 
 
 
@@ -529,13 +603,15 @@ int main(int argc, char **argv)
 	gaussian_traj_estimator.PublishPredictions();
 	gaussian_traj_estimator.PublishTrainingData();
 	gaussian_traj_estimator.PublishSampledData();
+	gaussian_traj_estimator.PublishValidData();
 	gaussian_traj_estimator.PublishEDF();
+
+	
 	
 	cout << "Subscribers and Publishers intialized" << endl;
 
 	// Plot Euclidean distance field
-	gaussian_traj_estimator.GenerateEDFplot();
-
+	gaussian_traj_estimator.GenerateEDF();
 
 	
 
