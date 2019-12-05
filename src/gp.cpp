@@ -144,14 +144,14 @@ Eigen::MatrixXd GP::pred_mean(Eigen::MatrixXd X_train, Eigen::VectorXd t_train, 
 	Eigen::MatrixXd k_t_test_train = kernel_matrix_f2vect(t_test,t_train,g,l);
 	Eigen::MatrixXd k_t_test_train_transpose = k_t_test_train.transpose().eval();
 	// print out k_t_test_train
-	cout << "pred_mean(): K_t_test_train ---------------" << endl;
-	cout << k_t_test_train << endl;
+	//cout << "pred_mean(): K_t_test_train ---------------" << endl;
+	//cout << k_t_test_train << endl;
 	
 	Eigen::MatrixXd K_t_train = kernel_matrix_f2vect(t_train, t_train,g,l) + pow(sigma_omega,2) * I;
 	Eigen::MatrixXd K_t_train_inv = K_t_train.inverse();
 	// print out k_t_train_inv
-	cout << "pred_mean(): K_t_train_inv ---------------" << endl;
-	cout << K_t_train_inv << endl;
+	//cout << "pred_mean(): K_t_train_inv ---------------" << endl;
+	//cout << K_t_train_inv << endl;
 
 	Eigen::MatrixXd mean;
 	mean = k_t_test_train * K_t_train_inv * X_train; 
@@ -177,27 +177,27 @@ Eigen::MatrixXd GP::pred_var(Eigen::VectorXd t_train, Eigen::VectorXd t_test)
 	
 	Eigen::MatrixXd K_t_test = kernel_matrix_f2vect(t_test,t_test, g, l);
 	// print out K_t_test
-	cout << "pred_var(): K_t_test ---------------" << endl;
-	cout << K_t_test << endl;
+	//cout << "pred_var(): K_t_test ---------------" << endl;
+	//cout << K_t_test << endl;
 	
 	
 	Eigen::MatrixXd K_t_test_train = kernel_matrix_f2vect(t_test,t_train, g, l);
 	// print out K_t_test_train
-	cout << "pred_var(): K_t_test_train ---------------" << endl;
-	cout << K_t_test_train << endl;
+	//cout << "pred_var(): K_t_test_train ---------------" << endl;
+	//cout << K_t_test_train << endl;
 
 	 
 	Eigen::MatrixXd K_t_train  = kernel_matrix_f2vect(t_train, t_train, g, l) + pow(sigma_omega,2) * I;
 	// print out K_t_train
-	cout << "pred_var(): K_t_train ---------------" << endl;
-	cout << K_t_train << endl;
+	//cout << "pred_var(): K_t_train ---------------" << endl;
+	//cout << K_t_train << endl;
 	
 	
 	Eigen::MatrixXd var;
 	var = K_t_test - K_t_test_train * K_t_train.inverse() * K_t_test_train.transpose().eval();
 	// print out predicted variance
-	cout << "var ---------------" << endl;
-	cout << var << endl;
+	//cout << "var ---------------" << endl;
+	//cout << var << endl;
 
 	return var; // (TxT)-(TxN)(NxN)(NxT)
 }
@@ -242,7 +242,7 @@ int test_gp()
 	Eigen::VectorXd t_test;
 	t_test.setLinSpaced(10,0.0,15.0);
 
-	cout << "no error until gp_debug initializiation" << endl; 
+	//cout << "no error until gp_debug initializiation" << endl; 
 
 	GP gp_debug {1, 10, 0.01};
 
@@ -258,12 +258,12 @@ int test_gp()
 
 	// SCALAR KERNEL SEEMS TO WORK
 	double scalar_output = gp_debug.scalar_kernel_f2scalar(0.5, 3.1,1,10);
-	cout << scalar_output << endl;
+	//cout << scalar_output << endl;
 	
 	// PRINT DEBUG RESULTS
-	cout << "-----main() output -----------------" << endl;
-	cout << mu_debug << endl;
-	cout << sigma_debug << endl;
+	//cout << "-----main() output -----------------" << endl;
+	//cout << mu_debug << endl;
+	//cout << sigma_debug << endl;
 	
 	//Eigen::MatrixXd test_output = gp_debug.kernel_matrix_f2vect(t_test, t_train, 1, 10);
 	//cout << test_output << endl;

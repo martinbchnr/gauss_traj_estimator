@@ -61,7 +61,8 @@ Eigen::MatrixXd MultiGaussian::sample() const
     
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<> N{0,6};
+    std::normal_distribution<> N{0,3};
+    std::uniform_real_distribution<> dis(-2.0, 2.0);
 
     //cout << "initialized random machine" << endl;
     //cout << "dims of mean and sigma:" << endl;
@@ -72,10 +73,12 @@ Eigen::MatrixXd MultiGaussian::sample() const
 
     Eigen::MatrixXd z(mean.rows(),mean.cols());
     // Fill rows of z with numbers between 0 and 1 from z ~ N(0, I)
+    double rand_a = N(gen);
+    double rand_b = N(gen);
     for (uint k=0; k<mean.rows(); k++)  
     {
-        z(k,0) = N(gen);
-        z(k,1) = N(gen);
+        z(k,0) = rand_a; //z(k,0) = rand_a; N(gen);
+        z(k,1) = rand_b; //z(k,1) = rand_b;
     }
     //cout << "generated random z numbers" << endl;
 
@@ -110,6 +113,8 @@ Eigen::MatrixXd MultiGaussian::approximateDim(Eigen::MatrixXd data, uint points)
 
     cout<< approx_mean << endl;
     cout<< approx_sigma << endl;
+
+    return approx_mean;
 
 }
     

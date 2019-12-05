@@ -126,17 +126,20 @@ double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
 
     edf_ptr->getDistanceAndClosestObstacle(octomap_point, distance_raw, closestObst);
     
+    
     // compute real cost from distance value 
     if (distance_raw <=0 ) {
         return (-distance_raw + 0.5*r_safe); 
     }   
     else if ((0<distance_raw) and (distance_raw < r_safe) ) {
+        //return distance_raw;
         return 1/(2*r_safe)*pow(distance_raw - r_safe,2);                
     }
     else {
-        return 0;
+        return distance_raw;
     }     
     
+
 
 }
 
@@ -157,12 +160,14 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 
     bool rejected = false;
     
+    double prev_point_cost = 0.0;
+
     //  go through all points of the path
     for (uint j=0; j < sample_dim; ++j) {
 
         sample_point.x = sample_path(j,0);
         sample_point.y = sample_path(j,1);
-        sample_point.z = 0.8;
+        sample_point.z = 0.5;
 
         double point_cost;
 
@@ -173,15 +178,22 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 
         edf_ptr->getDistanceAndClosestObstacle(octomap_point, distance_raw, closestObst);
     
+        if ((distance_raw < 0.02) or (distance_raw == 0)) {
+            if (prev_point_cost > 0) {
+                point_cost = prev_point_cost + 1000000; 
+            }
+            else {
+                point_cost = 10;
+            }
 
-        if ((distance_raw < 0.0) or (distance_raw == 0)) {
-            point_cost = 1000;
+            prev_point_cost = point_cost;
             rejected = true;
         }
         else {
-            point_cost = 1/distance_raw;
+            point_cost = 0;
+            prev_point_cost = 0;
         }
-
+        
         sum_path_cost += point_cost;
 
         //cout << "COST OF POINT: \n" << point_cost << endl;

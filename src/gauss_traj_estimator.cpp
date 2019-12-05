@@ -275,6 +275,42 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 }
 
 
+visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(const Eigen::MatrixXd matrix, const Eigen::MatrixXd intensity, const uint sample_count)
+{
+	// all sampled paths are vertically concatenated in the argument matrix that is why we convert them
+	// sample by sample to the marker line.
+
+	int matrix_size = matrix.rows();
+	int sample_dim = matrix_size/sample_count; // slice out 'sample-block'
+	
+	visualization_msgs::MarkerArray sampled_paths;
+
+	for (int i = 0; i < sample_count; ++i)
+	{	
+		
+		visualization_msgs::Marker one_path;
+		one_path.action = 0;
+
+		for(int j=0; j < sample_dim; ++j) {
+			geometry_msgs::Point point;
+			point.x = matrix(i*sample_dim + j,0);
+			point.y = matrix(i*sample_dim + j,1);
+			one_path.points.push_back(point);
+		}
+		
+		one_path.header.frame_id = "/world";
+		one_path.scale.x = 0.05; // only scale x is used
+		one_path.color.b = 1.0;
+		one_path.color.a = intensity(i); 
+		one_path.type = visualization_msgs::Marker::LINE_STRIP;
+		sampled_paths.markers.push_back(one_path);
+		
+	}
+
+	return sampled_paths;
+}
+
+
 Eigen::MatrixXd GaussTrajEstimator::RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose) 
 {
 	Eigen::MatrixXd eig_pose(2,1);
@@ -348,7 +384,7 @@ void GaussTrajEstimator::spin() {
 
 			Eigen::MatrixXd X_train(6,2);
 			X_train  << 0.0, 0.0,
-						0.5, 0.0,
+						2.0, 0.0,
 						3.4578,4.1620,  
 						6.7478, 8.0200,
 						8.3223, 3.9896,
@@ -357,11 +393,11 @@ void GaussTrajEstimator::spin() {
 			// Create train time data
 			Eigen::VectorXd t_train(6);
 			t_train << 	0.0,
-						0.5, 
+						0.6, 
 						 3.0,
 						5.0,
 						7.0,
-						10.0;
+						9.0;
 
 
 			// epsilon follow up method:
@@ -372,16 +408,16 @@ void GaussTrajEstimator::spin() {
 
 			// Initialize Gaussian process with these parameters
 			// {signal var, length scale, noise var}
-			GP gp_debug {1.8, 2.5, 0.1}; // default: {g=1, l=10, 0.01} 
+			GP gp_debug {1.8, 2.5, 0.1}; // working: {1.8, 2.5, 0.1} default: {g=1, l=10, 0.01} 
 
 			// Run the mean and covariance computation using the provided test and training data
 			Eigen::MatrixXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
 			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
 			
 			// Console output of computations to check validity
-			cout << "----- GaussTrajEstimator: debug output -----" << endl;
-			cout << mu_debug << endl;
-			cout << sigma_debug << endl;
+			//cout << "----- GaussTrajEstimator: debug output -----" << endl;
+			//cout << mu_debug << endl;
+			//cout << sigma_debug << endl;
 
 
 			// Generate ROS compatible topics out of computation results
@@ -447,7 +483,7 @@ void GaussTrajEstimator::spin() {
 					valid_paths_counter += 1;
 					valid_sampled_idx(i,0) = 1;
 					
-					cout << "PATH NO. " << i << "IS VALID" << endl;
+					//cout << "PATH NO. " << i << "IS VALID" << endl;
 					
 				}
 				else {
@@ -455,8 +491,12 @@ void GaussTrajEstimator::spin() {
 				}
 				
 			}
+
+			cout << path_costs << endl;
 			
 			
+
+			// generate matrix of valid sampled data (no collisions)
 			Eigen::MatrixXd valid_sampled_data(valid_paths_counter*sample_dim,mu_debug.cols());
 
 			uint next_row_idx = 0;
@@ -472,9 +512,54 @@ void GaussTrajEstimator::spin() {
 
 			}
 
-			Eigen::MatrixXd valid_mean_path(sample_dim,mu_debug.cols());
+			// get location of maximum
+			Eigen::MatrixXf::Index maxRow, maxCol;
+  			float max_cost = path_costs.maxCoeff(&maxRow, &maxCol);
 
-		
+			// get location of minimum
+			Eigen::MatrixXf::Index minRow, minCol;
+			float min_cost = path_costs.minCoeff(&minRow, &minCol);
+
+			
+			Eigen::MatrixXd valid_mean_path_cost(sample_dim,mu_debug.cols());
+
+			// Generate a mean-path based on cost evaluation of all paths
+			for (uint k = 0; k < sample_dim; k++) {
+				// per path-point
+				Eigen::MatrixXd mean_per_dim(1,mu_debug.cols());
+
+				double x_cumulated = 0.0;
+				double y_cumulated = 0.0;
+
+				double cost_cumulated = 0.0;
+
+				//add up coordinates of all samples
+				for (uint l = 0; l < sample_count; l++) {
+					double cost_factor = (1-(path_costs(l)-min_cost)/(max_cost-min_cost));
+					//double cost_factor = (1/(path_costs(l)));
+
+					x_cumulated += cost_factor*entire_sampled_data(l*sample_dim+k,0);
+					y_cumulated += cost_factor*entire_sampled_data(l*sample_dim+k,1);
+					cost_cumulated += cost_factor;
+				}
+
+				
+				mean_per_dim(0,0) = x_cumulated/cost_cumulated;
+				mean_per_dim(0,1) = y_cumulated/cost_cumulated;
+				
+				
+				valid_mean_path_cost(k,0) = mean_per_dim(0,0);
+				valid_mean_path_cost(k,1) = mean_per_dim(0,1);	
+			}
+
+
+			cout << "VALID MEAN PATH" << endl;
+			//cout << valid_mean_path_cost << endl;
+
+
+			Eigen::MatrixXd valid_mean_path_rej(sample_dim,mu_debug.cols());
+
+			// Generate a mean-path based on non-colliding paths
 			for (uint k = 0; k < sample_dim; k++) {
 				// per path-point
 				Eigen::MatrixXd mean_per_dim(1,mu_debug.cols());
@@ -497,26 +582,67 @@ void GaussTrajEstimator::spin() {
 					mean_per_dim(0,1) = 0.0;
 				}
 				
-				valid_mean_path(k,0) = mean_per_dim(0,0);
-				valid_mean_path(k,1) = mean_per_dim(0,1);	
+				valid_mean_path_rej(k,0) = mean_per_dim(0,0);
+				valid_mean_path_rej(k,1) = mean_per_dim(0,1);	
 			}
 
-			
 
+			Eigen::MatrixXd a_new_mean_path(sample_dim,mu_debug.cols());
+
+			// NEW AVERAGING FUNCTION
+			for (int k=0; k < valid_paths_counter; k++) {
+				
+				for (int j=0; j < sample_dim; j++) {
+					a_new_mean_path(j,0) = valid_sampled_data(k*sample_dim+j,0)/(float)valid_paths_counter;
+					a_new_mean_path(j,1) = valid_sampled_data(k*sample_dim+j,1)/(float)valid_paths_counter; 
+				}
+			}
+
+
+
+			for (uint k = 0; k < sample_dim; k++) {
+				// per path-point
+				Eigen::MatrixXd mean_per_dim(1,mu_debug.cols());
+
+				double x_cumulated = 0.0;
+				double y_cumulated = 0.0;
+
+				//add up coordinates of all samples
+				for (uint l = 0; l < valid_paths_counter; l++) {
+					x_cumulated += valid_sampled_data(l*sample_dim+k,0);
+					y_cumulated += valid_sampled_data(l*sample_dim+k,1);
+				}
+
+				if (valid_paths_counter > 0) {
+					mean_per_dim(0,0) = x_cumulated/valid_paths_counter;
+					mean_per_dim(0,1) = y_cumulated/valid_paths_counter;
+				}
+				else {
+					mean_per_dim(0,0) = 0.0;
+					mean_per_dim(0,1) = 0.0;
+				}
+				
+				valid_mean_path_rej(k,0) = mean_per_dim(0,0);
+				valid_mean_path_rej(k,1) = mean_per_dim(0,1);	
+			}
+
+
+			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(a_new_mean_path);
+			valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
+/* 
 			// check if mean path does not collide with any walls:
 			PathEvaluator::eval_info result;
-			result = path_cost_eval.cost_of_path(valid_mean_path);
-			if (result.rej == false) {
-				cout << "MEAN PATH IS VALID" << endl;
-				valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(valid_mean_path);
-				valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
+			result = path_cost_eval.cost_of_path(a_new_mean_path);
+			if (result.rej == true) {
+				//cout << "MEAN PATH IS VALID" << endl;
+				
 				latest_valid_mean_path_rosmsg = valid_mean_path_rosmsg;
 			}
 			else {
 				cout << "MEAN PATH NOT VALID, INCREASE SAMPLE NUMBER OR CHECK FOR DIVERGENCE OF PATHS." << endl;
-				valid_pred_path_mean_pub.publish(latest_valid_mean_path_rosmsg );
+				valid_pred_path_mean_pub.publish(latest_valid_mean_path_rosmsg);
 			}
-
+ */
 			
 
 			//cout << "LENGTH OF VALID SAMPLED DATA ARRAY:" << valid_sampled_data.rows()/sample_dim  << endl;
@@ -529,7 +655,7 @@ void GaussTrajEstimator::spin() {
 			
 			
 
-			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(entire_sampled_data, sample_count);
+			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(entire_sampled_data, path_costs, sample_count);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 
 			
