@@ -275,7 +275,7 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 }
 
 
-visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(const Eigen::MatrixXd matrix, const Eigen::MatrixXd intensity, const uint sample_count)
+visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(const Eigen::MatrixXd matrix, const uint sample_count, const Eigen::MatrixXd intensity)
 {
 	// all sampled paths are vertically concatenated in the argument matrix that is why we convert them
 	// sample by sample to the marker line.
@@ -300,8 +300,11 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 		
 		one_path.header.frame_id = "/world";
 		one_path.scale.x = 0.05; // only scale x is used
-		one_path.color.b = 1.0;
-		one_path.color.a = intensity(i); 
+		one_path.color.b = 0.5;
+		one_path.color.r = 0.5;
+		//one_path.color.a = 1.0;
+		one_path.color.a = 1-intensity(i)-0.5; 
+		one_path.id = i;
 		one_path.type = visualization_msgs::Marker::LINE_STRIP;
 		sampled_paths.markers.push_back(one_path);
 		
@@ -309,6 +312,10 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 
 	return sampled_paths;
 }
+
+
+
+
 
 
 Eigen::MatrixXd GaussTrajEstimator::RosPoseWithCovToEigenArray(const geometry_msgs::PoseWithCovarianceStamped pose) 
@@ -393,7 +400,7 @@ void GaussTrajEstimator::spin() {
 			// Create train time data
 			Eigen::VectorXd t_train(6);
 			t_train << 	0.0,
-						0.6, 
+						0.8, 
 						 3.0,
 						5.0,
 						7.0,
@@ -449,14 +456,16 @@ void GaussTrajEstimator::spin() {
 			
 			
 
-			uint valid_paths_counter = 0;
-			
-			 
-			//PathEvaluator path_cost_eval;
 			
  			
 
 			// Option B: Sample a multitude of paths at a time:
+
+			uint valid_paths_counter = 0;
+			
+			 
+			//PathEvaluator path_cost_eval;
+
 			uint sample_count = 500;
 			uint sample_dim = mu_debug.rows();
 
@@ -492,7 +501,8 @@ void GaussTrajEstimator::spin() {
 				
 			}
 
-			cout << path_costs << endl;
+			//cout << path_costs << endl;
+			cout << entire_sampled_data.rows() << endl;
 			
 			
 
@@ -561,6 +571,7 @@ void GaussTrajEstimator::spin() {
 
 			// Generate a mean-path based on non-colliding paths
 			for (uint k = 0; k < sample_dim; k++) {
+				
 				// per path-point
 				Eigen::MatrixXd mean_per_dim(1,mu_debug.cols());
 
@@ -585,6 +596,7 @@ void GaussTrajEstimator::spin() {
 				valid_mean_path_rej(k,0) = mean_per_dim(0,0);
 				valid_mean_path_rej(k,1) = mean_per_dim(0,1);	
 			}
+
 
 
 			Eigen::MatrixXd a_new_mean_path(sample_dim,mu_debug.cols());
@@ -627,7 +639,59 @@ void GaussTrajEstimator::spin() {
 			}
 
 
-			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(a_new_mean_path);
+
+
+			// NEW METHOD TO EVALUATE THE FINAL MEAN PATH
+			
+			//MultiGaussian gaussian_debug();
+
+			Eigen::MatrixXd mean_path(sample_dim,mu_debug.cols());
+
+			for (uint j=0; j < sample_dim; j++) {
+					// loop through all dimension of a path
+					Eigen::MatrixXd dim_agg(valid_paths_counter,2);
+
+				for (uint k = 0; k < valid_paths_counter; k++) {
+					// loop through all valid paths one by one
+					Eigen::MatrixXd single_mean_dim(1,2);
+					dim_agg(k,0) = valid_sampled_data(k*sample_dim+j,0);
+					dim_agg(k,1) = valid_sampled_data(k*sample_dim+j,1);
+				}
+				
+				// Calculate the mean and covariance of the produced sampled points
+				
+				
+				Eigen::MatrixXd approx_mean(1,2);
+				//Eigen::MatrixXd approx_sigma(2, 2);
+				approx_mean.setZero();
+				//approx_sigma.setZero();
+
+				for (unsigned int i = 0; i < valid_paths_counter; i++)
+				{
+					approx_mean  = approx_mean  + dim_agg.row(i);
+					//approx_sigma = approx_sigma + data.row(i) * data.row(i).transpose();
+				}
+
+				approx_mean  = approx_mean  / static_cast<double>(valid_paths_counter);
+				//approx_sigma = approx_sigma / static_cast<double>(points);
+				//approx_sigma = approx_sigma - approx_mean * approx_mean.transpose();
+
+				cout<< approx_mean << endl;
+				//cout<< approx_sigma << endl;
+
+				mean_path(j,0) = approx_mean(0,0);
+				mean_path(j,1) = approx_mean(0,1);
+
+			}
+
+				
+				
+					
+			
+					
+
+
+			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(mean_path);
 			valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
 /* 
 			// check if mean path does not collide with any walls:
@@ -655,7 +719,7 @@ void GaussTrajEstimator::spin() {
 			
 			
 
-			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(entire_sampled_data, path_costs, sample_count);
+			sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArrayColored(entire_sampled_data, sample_count, path_costs);
 			sampled_pred_paths_pub.publish(sampled_pred_path_rosmsg);
 
 			
@@ -663,7 +727,7 @@ void GaussTrajEstimator::spin() {
 				valid_sampled_pred_path_rosmsg = GaussTrajEstimator::EigenToRosSampledPathsMarkerArray(valid_sampled_data, valid_paths_counter);
 				valid_sampled_pred_paths_pub.publish(valid_sampled_pred_path_rosmsg);
 
-				cout << "VALID SAMPLED PATHS: \n" << valid_sampled_data << endl;
+				//cout << "VALID SAMPLED PATHS: \n" << valid_sampled_data << endl;
 			}
 			else {
 				cout << "NO VALID SAMPLE PATHS, INCREASE NUMBER OF SAMPLES";

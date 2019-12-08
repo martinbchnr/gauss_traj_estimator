@@ -95,8 +95,8 @@ Eigen::MatrixXd MultiGaussian::sample() const
 Eigen::MatrixXd MultiGaussian::approximateDim(Eigen::MatrixXd data, uint points) const
 {
     
-    // Calculate the mean and covariance of the produces sampled points
-    Eigen::VectorXd approx_mean(2);
+    // Calculate the mean and covariance of the produced sampled points
+    Eigen::MatrixXd approx_mean(2,1);
     Eigen::MatrixXd approx_sigma(2, 2);
     approx_mean.setZero();
     approx_sigma.setZero();

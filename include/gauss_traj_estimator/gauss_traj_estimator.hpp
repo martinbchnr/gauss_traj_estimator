@@ -113,7 +113,7 @@ class GaussTrajEstimator {
   Eigen::MatrixXd RosTimesToEigenArray(const gauss_traj_estimator::TrainTimes times_array);
   visualization_msgs::MarkerArray EigenToRosMarkerArray(const Eigen::MatrixXd matrix);
   visualization_msgs::MarkerArray EigenToRosSampledPathsMarkerArray(const Eigen::MatrixXd matrix, const uint sample_count);
-  visualization_msgs::MarkerArray EigenToRosSampledPathsMarkerArrayColored(const Eigen::MatrixXd matrix, const Eigen::MatrixXd path_costs, const uint sample_count);
+  visualization_msgs::MarkerArray EigenToRosSampledPathsMarkerArrayColored(const Eigen::MatrixXd matrix, const uint sample_count, const Eigen::MatrixXd intensity);
 
   PathEvaluator path_cost_eval;
 };
