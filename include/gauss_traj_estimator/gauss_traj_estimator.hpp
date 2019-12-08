@@ -47,6 +47,9 @@ class GaussTrajEstimator {
   ros::Publisher valid_sampled_pred_paths_pub;
   ros::Publisher valid_pred_path_mean_pub;
   ros::Publisher edf_field_pub;
+  ros::Publisher valid_pred_path_cov_pos_pub;
+  ros::Publisher valid_pred_path_cov_neg_pub;
+  
 
   std::string target_pred_path_mean_topic = "/target_pred_path_mean";
   std::string target_pred_path_cov_topic = "/target_pred_path_cov";
@@ -55,8 +58,8 @@ class GaussTrajEstimator {
   std::string valid_sampled_pred_paths_topic = "/valid_sampled_pred_paths";
   std::string valid_pred_path_mean_topic = "/valid_pred_path_mean";
   std::string edf_field_topic = "/edf_field";
-
-
+  std::string valid_pred_path_cov_pos_topic = "/valid_pred_path_cov_pos_topic";
+  std::string valid_pred_path_cov_neg_topic = "/valid_pred_path_cov_neg_topic";
 
   // ROS message variables to store subscribed data
   geometry_msgs::PoseWithCovarianceStamped target_pose_rosmsg;
@@ -82,6 +85,9 @@ class GaussTrajEstimator {
   visualization_msgs::MarkerArray valid_sampled_pred_path_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
   nav_msgs::Path valid_mean_path_rosmsg;
+  nav_msgs::Path valid_pred_path_cov_pos_rosmsg;
+  nav_msgs::Path valid_pred_path_cov_neg_rosmsg;
+
   nav_msgs::Path latest_valid_mean_path_rosmsg;
   
 

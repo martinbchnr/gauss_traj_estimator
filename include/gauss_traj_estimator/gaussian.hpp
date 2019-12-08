@@ -10,9 +10,9 @@ private:
 	
 
 	// mean vector, covariance matrix
-	
     Eigen::MatrixXd mean;
     Eigen::MatrixXd sigma;
+
 
 public:
 	// Create a new multivariate distribution N(mu, Sigma), with engine gen
@@ -22,8 +22,17 @@ public:
 	// Return probability values
 	double pdf(const Eigen::VectorXd& x) const;
 
+	struct normal_params {
+        Eigen::MatrixXd mean;
+		Eigen::MatrixXd sigma;
+    };
+
+
 	// Sample the distribution
 	Eigen::MatrixXd sample() const;
-	Eigen::MatrixXd approximateDim(Eigen::MatrixXd data, uint points) const;
+	MultiGaussian::normal_params approximate(Eigen::MatrixXd data, uint points) const;
+	Eigen::MatrixXd getMean() const;
+	Eigen::MatrixXd getCov() const;
+
 };
 

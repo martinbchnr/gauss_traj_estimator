@@ -147,8 +147,7 @@ double PathEvaluator::cost_at_point(geometry_msgs::Point32 p)
 PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path)
 {    
     
-    
-     
+ 
     //cout<<"[cost_at_point]: " << p.x <<","<< p.y << ","<<p.z << endl;
 
     uint sample_dim = sample_path.rows();

@@ -134,6 +134,13 @@ void GaussTrajEstimator::PublishValidData()
 	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), valid_pred_path_mean_topic.c_str());
 	valid_pred_path_mean_pub = node.advertise<nav_msgs::Path>(valid_pred_path_mean_topic, 100);
 
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), valid_pred_path_cov_pos_topic.c_str());
+	valid_pred_path_cov_pos_pub = node.advertise<nav_msgs::Path>(valid_pred_path_cov_pos_topic, 100);
+
+	ROS_INFO("[%s]: Publishing to topic '%s'", node_name.c_str(), valid_pred_path_cov_neg_topic.c_str());
+	valid_pred_path_cov_neg_pub = node.advertise<nav_msgs::Path>(valid_pred_path_cov_neg_topic, 100);
+
+
 }
 
 void GaussTrajEstimator::PublishEDF()
@@ -684,15 +691,42 @@ void GaussTrajEstimator::spin() {
 
 			}
 
-				
-				
-					
+			Eigen::MatrixXd mu_valid_approx(mu_debug.rows(),mu_debug.cols());
+			Eigen::MatrixXd sigma_valid_approx(mu_debug.rows(), mu_debug.rows());
+
+			mu_valid_approx.setZero();
+			sigma_valid_approx.setZero();
+
+			MultiGaussian valid_path_approx(mu_valid_approx, sigma_valid_approx);
+
+			MultiGaussian::normal_params approx_mean_path_params;
+
+			approx_mean_path_params = valid_path_approx.approximate(valid_sampled_data, valid_paths_counter);
+
 			
-					
-
-
-			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(mean_path);
+			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(approx_mean_path_params.mean);
 			valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
+
+			Eigen::MatrixXd valid_pred_path_cov_pos = approx_mean_path_params.mean;
+			valid_pred_path_cov_pos.col(0) = valid_pred_path_cov_pos.col(0) + 1.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_pos.col(1) = valid_pred_path_cov_pos.col(1) + 1.96 * approx_mean_path_params.sigma.diagonal();
+
+			Eigen::MatrixXd valid_pred_path_cov_neg = approx_mean_path_params.mean;
+			valid_pred_path_cov_neg.col(0) = valid_pred_path_cov_neg.col(0) - 1.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_neg.col(1) = valid_pred_path_cov_neg.col(1) - 1.96 * approx_mean_path_params.sigma.diagonal();
+
+
+
+			//Eigen::MatrixXd valid_pred_path_cov_pos = approx_mean_path_params.mean.col(0) + 1.96 * approx_mean_path_params.sigma.diagonal();
+			//Eigen::MatrixXd valid_pred_path_cov_neg = approx_mean_path_params.mean - 1.96 * approx_mean_path_params.sigma.diagonal();
+
+			valid_pred_path_cov_pos_rosmsg = GaussTrajEstimator::EigenToRosPath(valid_pred_path_cov_pos);
+			valid_pred_path_cov_neg_rosmsg = GaussTrajEstimator::EigenToRosPath(valid_pred_path_cov_neg);
+			valid_pred_path_cov_pos_pub.publish(valid_pred_path_cov_pos_rosmsg);
+			valid_pred_path_cov_neg_pub.publish(valid_pred_path_cov_neg_rosmsg);
+
+
+
 /* 
 			// check if mean path does not collide with any walls:
 			PathEvaluator::eval_info result;
@@ -732,11 +766,7 @@ void GaussTrajEstimator::spin() {
 			else {
 				cout << "NO VALID SAMPLE PATHS, INCREASE NUMBER OF SAMPLES";
 			}
-			
 
- 
-
- 			
         }
         r.sleep();
     }
