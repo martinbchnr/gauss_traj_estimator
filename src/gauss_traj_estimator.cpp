@@ -708,12 +708,12 @@ void GaussTrajEstimator::spin() {
 			valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
 
 			Eigen::MatrixXd valid_pred_path_cov_pos = approx_mean_path_params.mean;
-			valid_pred_path_cov_pos.col(0) = valid_pred_path_cov_pos.col(0) + 1.96 * approx_mean_path_params.sigma.diagonal();
-			valid_pred_path_cov_pos.col(1) = valid_pred_path_cov_pos.col(1) + 1.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_pos.col(0) = valid_pred_path_cov_pos.col(0) + 2.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_pos.col(1) = valid_pred_path_cov_pos.col(1) + 2.96 * approx_mean_path_params.sigma.diagonal();
 
 			Eigen::MatrixXd valid_pred_path_cov_neg = approx_mean_path_params.mean;
-			valid_pred_path_cov_neg.col(0) = valid_pred_path_cov_neg.col(0) - 1.96 * approx_mean_path_params.sigma.diagonal();
-			valid_pred_path_cov_neg.col(1) = valid_pred_path_cov_neg.col(1) - 1.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_neg.col(0) = valid_pred_path_cov_neg.col(0) - 2.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_neg.col(1) = valid_pred_path_cov_neg.col(1) - 2.96 * approx_mean_path_params.sigma.diagonal();
 
 
 

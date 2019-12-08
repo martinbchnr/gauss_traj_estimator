@@ -58,8 +58,8 @@ class GaussTrajEstimator {
   std::string valid_sampled_pred_paths_topic = "/valid_sampled_pred_paths";
   std::string valid_pred_path_mean_topic = "/valid_pred_path_mean";
   std::string edf_field_topic = "/edf_field";
-  std::string valid_pred_path_cov_pos_topic = "/valid_pred_path_cov_pos_topic";
-  std::string valid_pred_path_cov_neg_topic = "/valid_pred_path_cov_neg_topic";
+  std::string valid_pred_path_cov_pos_topic = "/valid_pred_path_cov_pos";
+  std::string valid_pred_path_cov_neg_topic = "/valid_pred_path_cov_neg";
 
   // ROS message variables to store subscribed data
   geometry_msgs::PoseWithCovarianceStamped target_pose_rosmsg;
