@@ -1,0 +1,39 @@
+gp_params: {signal_var: 1.8,
+            length_scale: 2.5,
+            noise_var: 0.1
+            }
+
+
+training_data: {X_x:  [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981],
+                X_y:  [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515],
+                X_z:  [],
+                t:    [0.0, 0.8, 3.0, 5.0, 7.0, 9.0],
+                dim: 2,
+                no_samles:  6, 
+                }
+
+
+
+gaussian_params: {norm_var: 3,
+                  uniform_lower_bound: -2.0,
+                  uniform_upper_bound: 2.0
+                  }
+
+
+sampling_params: {sampling_path_dim: 200,
+                  start_t: 0.0,
+                  end_t: 9.0,
+                  sample_count: 500
+                  }
+
+path_cost_params: {r_safe: 1.4,
+                    ground_rejection_height: 0.7
+                  }
+
+
+node_params: {frame_id: "/world",
+              run_freq: 0.4
+              }
+
+
+

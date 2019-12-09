@@ -18,6 +18,33 @@ GaussTrajEstimator::~GaussTrajEstimator()
 {
 }
 
+
+GaussTrajEstimator::ReceiveParams() 
+{
+
+	node.param("training_data/X_x", X_train_x, [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981]);
+	node.param("training_data/X_y", X_train_y, [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515]);
+	node.param("training_data/X_z", X_train_z, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+	
+	node.param("training_data/t",t_train, [0.0, 0.8, 3.0, 5.0, 7.0, 9.0]);
+	node.param("training_data/dim",,);
+	
+	node.param("training_data/no_samples",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+	node.param("",,);
+
+}
+
 // Store the current target position
 void GaussTrajEstimator::targetPoseCallback(const geometry_msgs::PoseWithCovarianceStamped msg)
 {
@@ -269,8 +296,10 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 		}
 		
 		one_path.header.frame_id = "/world";
-		one_path.scale.x = 0.05; // only scale x is used
-		one_path.color.b = 1.0;
+		one_path.scale.x = 0.08; // only scale x is used
+		one_path.color.r = 0.15;
+		one_path.color.g = 0.47;
+		one_path.color.b = 0.8;
 		one_path.color.a = 1.0;
 		one_path.id = i;
 		one_path.type = visualization_msgs::Marker::LINE_STRIP;
@@ -306,9 +335,9 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 		}
 		
 		one_path.header.frame_id = "/world";
-		one_path.scale.x = 0.05; // only scale x is used
-		one_path.color.b = 0.5;
-		one_path.color.r = 0.5;
+		one_path.scale.x = 0.03; // only scale x is used
+		one_path.color.b = 0.4;
+		one_path.color.r = 0.4;
 		//one_path.color.a = 1.0;
 		one_path.color.a = 1-intensity(i)-0.5; 
 		one_path.id = i;
@@ -458,6 +487,8 @@ void GaussTrajEstimator::spin() {
 			// Console output of sample results to check validity
 			cout << "----- GaussTrajEstimator: sampled paths -----" << endl;
 			cout << single_debug_sample << endl;
+			
+			...
 			*/
 
 			
@@ -707,13 +738,14 @@ void GaussTrajEstimator::spin() {
 			valid_mean_path_rosmsg = GaussTrajEstimator::EigenToRosPath(approx_mean_path_params.mean);
 			valid_pred_path_mean_pub.publish(valid_mean_path_rosmsg);
 
+			// generate 99%/interval curves
 			Eigen::MatrixXd valid_pred_path_cov_pos = approx_mean_path_params.mean;
-			valid_pred_path_cov_pos.col(0) = valid_pred_path_cov_pos.col(0) + 2.96 * approx_mean_path_params.sigma.diagonal();
-			valid_pred_path_cov_pos.col(1) = valid_pred_path_cov_pos.col(1) + 2.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_pos.col(0) = valid_pred_path_cov_pos.col(0) + 2*2.576 * approx_mean_path_params.sigma.diagonal()/(sqrt(sample_dim));
+			valid_pred_path_cov_pos.col(1) = valid_pred_path_cov_pos.col(1) + 2*2.576 * approx_mean_path_params.sigma.diagonal()/(sqrt(sample_dim));
 
 			Eigen::MatrixXd valid_pred_path_cov_neg = approx_mean_path_params.mean;
-			valid_pred_path_cov_neg.col(0) = valid_pred_path_cov_neg.col(0) - 2.96 * approx_mean_path_params.sigma.diagonal();
-			valid_pred_path_cov_neg.col(1) = valid_pred_path_cov_neg.col(1) - 2.96 * approx_mean_path_params.sigma.diagonal();
+			valid_pred_path_cov_neg.col(0) = valid_pred_path_cov_neg.col(0) - 2*2.576 * approx_mean_path_params.sigma.diagonal()/(sqrt(sample_dim));
+			valid_pred_path_cov_neg.col(1) = valid_pred_path_cov_neg.col(1) - 2*2.576 * approx_mean_path_params.sigma.diagonal()/(sqrt(sample_dim));
 
 
 

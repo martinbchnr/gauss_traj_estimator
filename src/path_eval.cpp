@@ -35,7 +35,7 @@ void PathEvaluator::load_map()
     r_safe = 3.4;
 
     string file_name;
-    file_name = "/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+    file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
 
 
     //if(file_name.substr(file_name.find_last_of(".")+1)=="bt") {
@@ -216,7 +216,7 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
 sensor_msgs::PointCloud PathEvaluator::ComputeEDF() 
 {
     string file_name;
-    file_name = "/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+    file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
     octomap::OcTree* tree_ptr = new octomap::OcTree(file_name);
 
     double res = tree_ptr->getResolution(); // =dx
