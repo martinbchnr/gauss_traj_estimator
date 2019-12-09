@@ -21,27 +21,40 @@ GaussTrajEstimator::~GaussTrajEstimator()
 
 GaussTrajEstimator::ReceiveParams() 
 {
-
-	node.param("training_data/X_x", X_train_x, [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981]);
-	node.param("training_data/X_y", X_train_y, [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515]);
-	node.param("training_data/X_z", X_train_z, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
 	
-	node.param("training_data/t",t_train, [0.0, 0.8, 3.0, 5.0, 7.0, 9.0]);
+	GP_PARAMS gp_params;
+	TRAINING_DATA_PARAMS training_data;
+	GAUSSIAN_PARAMS gaussian_params;
+	SAMPLING_PARAMS sampling_params;
+	PATH_COST_PARAMS path_cost_params;
+	NODE_PARAMS node_params;
+
+	node.param("training_data/X_x", training_data.X_train_x, [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981]);
+	node.param("training_data/X_y", training_data.X_train_y, [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515]);
+	node.param("training_data/X_z", training_data.X_train_z, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+	
+	node.param("training_data/t",training_data.t_train, [0.0, 0.8, 3.0, 5.0, 7.0, 9.0]);
 	node.param("training_data/dim",,);
 	
-	node.param("training_data/no_samples",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
-	node.param("",,);
+	node.param("training_data/num_samples", training_data.num_data_samples, 6);
+
+	node.param("gp_params/signal_var",gp_params.signal_var, 1.8);
+	node.param("gp_params/length_scale",gp_params.length_scale, 2.5);
+	node.param("gp_params/noise_var",gp_params.noise_var, 0.1);
+	
+	node.param("gaussian_params/norm_var", gaussian_params.norm_var, 3.0);
+	node.param("gaussian_params/uniform_lower_bound", gaussian_params.uniform_lower_bound, -2.0);
+	node.param("gaussian_params/uniform_upper_bound", gaussian_params.uniform_upper_bound, -2.0);
+	node.param("gaussian_params/sampling_mode", gaussian_params.sampling_mode, "gaussian");
+	node.param("sampling_params/sampling_path_dim", sampling_params.sampling_path_dim, 200);
+	node.param("sampling_params/start_t", sampling_params.start_t, 0.0);
+	node.param("sampling_params/end_t", sampling_params.end_t, 9.0);
+	node.param("sampling_params/sample_count", sampling_params.sample_count, 500);
+	
+	node.param("path_cost_params/r_safe", path_cost_params.r_safe, 1.4);
+	node.param("path_cost_params/ground_rejection_height", path_cost_params.ground_rejection_height, 0.7); 
+	node.param("node_params/frame_id", path_cost_params.frame_id, "/world");
+	node.param("node_params/run_freq", path_cost_params.run_freq,0.4);
 
 }
 

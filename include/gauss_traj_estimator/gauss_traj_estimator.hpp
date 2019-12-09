@@ -84,11 +84,50 @@ class GaussTrajEstimator {
   visualization_msgs::MarkerArray sampled_pred_path_rosmsg;
   visualization_msgs::MarkerArray valid_sampled_pred_path_rosmsg;
   std_msgs::Float32MultiArray pred_path_cov_rosmsg;
+
   nav_msgs::Path valid_mean_path_rosmsg;
   nav_msgs::Path valid_pred_path_cov_pos_rosmsg;
   nav_msgs::Path valid_pred_path_cov_neg_rosmsg;
-
   nav_msgs::Path latest_valid_mean_path_rosmsg;
+
+
+  struct GP_PARAMS {
+    double signal_var;
+    double length_scale;
+    double noise_var;        
+  };
+
+  struct TRAINING_DATA_PARAMS {
+    X_x:  [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981],
+    X_y:  [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515],
+    X_z:  [],
+    t:    [0.0, 0.8, 3.0, 5.0, 7.0, 9.0],
+    uint dim;
+    uint num_samples;
+  };
+
+  struct GAUSSIAN_PARAMS {
+    double norm_var;
+    double uniform_lower_bound;
+    double uniform_upper_bound;  
+  };
+
+  struct SAMPLING_PARAMS {
+    uint sampling_path_dim;
+    double start_t;
+    double end_t;
+    uint sample_count;    
+  };
+
+  struct PATH_COST_PARAMS {
+    double r_safe;
+    double ground_rejection_height;   
+  };
+
+  struct NODE_PARAMS {
+    string frame_id;
+    double run_freq;  
+  };
   
 
   public:
