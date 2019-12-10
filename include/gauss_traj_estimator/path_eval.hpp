@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/PoseStamped.h>
@@ -42,6 +43,8 @@ class PathEvaluator
     double r_safe; // safe clearance (outside of r_safe, cost = 0) 
 	double dx;
 
+    string map_file;
+
     
 	bool is_map_load = false;
     
@@ -58,10 +61,13 @@ class PathEvaluator
 	PathEvaluator();
     ~PathEvaluator();
 
+    void setParams(const string mapfile, const double rs, const double grh);
+
     //sensor_msgs::PointCloud edf_field;
 
-    void load_map();
-    sensor_msgs::PointCloud ComputeEDF();
+    void load_map(const uint map_res_scaler, const string filepath);
+    sensor_msgs::PointCloud ComputeEDF(const int map_res_scaler, const string frame_id, const string filepath);
+
     double cost_at_point(geometry_msgs::Point32 p);    
     
     PathEvaluator::eval_info cost_of_path(Eigen::MatrixXd sample_path);

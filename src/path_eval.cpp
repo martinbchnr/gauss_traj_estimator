@@ -11,10 +11,6 @@ typedef unsigned int uint;
 
 PathEvaluator::PathEvaluator()
 {
-    ground_rejection_height = -10.0;
-    r_safe = 3.4;
-
-    
 
     cout << "Instance of PathEvaluator has been initialized successfully." << endl;
 
@@ -25,22 +21,28 @@ PathEvaluator::~PathEvaluator()
 };
  
 
+void PathEvaluator::setParams(const string mapfile, const double rs, const double grh)
+{
+    this->r_safe = rs;
+    this->ground_rejection_height = grh;
+    this->map_file = mapfile;
+}
+
+
 void PathEvaluator::talk() {
     cout << "Path evaluator instance is talking.." << endl;
 }
 
-void PathEvaluator::load_map()
+void PathEvaluator::load_map(const uint map_res_scaler, const string filepath)
 {    
-    ground_rejection_height = -10.0;
-    r_safe = 3.4;
+    //ground_rejection_height = -10.0;
+    //r_safe = 3.4;
 
-    string file_name;
-    file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+    //file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
 
-
-    //if(file_name.substr(file_name.find_last_of(".")+1)=="bt") {
-    std::cout << "Provided octomap file: "<<file_name<< std::endl;
-    octomap::OcTree* tree_ptr = new octomap::OcTree(file_name);
+    // only supports octomap so far:
+    std::cout << "Provided octomap file: "<<filepath<< std::endl;
+    octomap::OcTree* tree_ptr = new octomap::OcTree(filepath);
 
     cout << "Number of nodes: " << tree_ptr->calcNumNodes() << endl;
     
@@ -95,14 +97,6 @@ void PathEvaluator::load_map()
     if(distance < edf_ptr->getMaxDist())
     std::cout<<"closest obstacle to "<<p.x()<<","<<p.y()<<","<<p.z()<<" is at "<<closestObst.x()<<","<<closestObst.y()<<","<<closestObst.z()<<std::endl;
 
-
-
-    /* 
-    octomap::OcTreeNode *n = tree_ptr->search(x,y,z);
-    if(n) {
-    cout << "Value: " << n->getValue() << "\n";
-    }
-     */
 
     // flag 
     is_map_load = true;
@@ -207,17 +201,15 @@ PathEvaluator::eval_info PathEvaluator::cost_of_path(Eigen::MatrixXd sample_path
     return path_evaluation;
     //cout << "COST OF PATH: \n" << sum_path_cost << endl;
     
-    
 
 }
 
 
 
-sensor_msgs::PointCloud PathEvaluator::ComputeEDF() 
+sensor_msgs::PointCloud PathEvaluator::ComputeEDF(const int map_res_scaler, const string frame_id, const string filepath) 
 {
-    string file_name;
-    file_name = "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
-    octomap::OcTree* tree_ptr = new octomap::OcTree(file_name);
+    
+    octomap::OcTree* tree_ptr = new octomap::OcTree(filepath);
 
     double res = tree_ptr->getResolution(); // =dx
 
@@ -232,7 +224,7 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF()
     tree_ptr->getMetricMax(x,y,z);
     octomap::point3d max(x,y,z);
 
-/* 
+    /* 
     double field_size_x = max.x() - min.x();
     double field_size_y = max.y() - min.y();
 
@@ -241,19 +233,18 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF()
 
     cout << "[PathEvaluator::ComputeEDF]: len_x " << len_x << endl;
     cout << "[PathEvaluator::ComputeEDF]: len_y " << len_y << endl;
-     */
+    */
 
     // define ros msg data type
     sensor_msgs::PointCloud edf_field;
 
-    float scaler = 10;
 
-    edf_field.points.resize(pow(scaler,2)*max.x()*max.y());
+    edf_field.points.resize(pow(map_res_scaler,2)*max.x()*max.y());
     edf_field.channels.resize(1);
     edf_field.channels[0].name = "intensity";
-    edf_field.channels[0].values.resize(pow(scaler,2)*max.x()*max.y());
+    edf_field.channels[0].values.resize(pow(map_res_scaler,2)*max.x()*max.y());
     
-    edf_field.header.frame_id = "/world";
+    edf_field.header.frame_id = frame_id;
     edf_field.header.stamp = ros::Time::now();
     //edf_field.channels.name = "distance";
 
@@ -261,11 +252,11 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF()
     
     
 
-    for (int i=0; i<max.x()*scaler; ++i) {
-        for(int j=0; j<max.y()*scaler; ++j) {
+    for (int i=0; i<max.x()*map_res_scaler; ++i) {
+        for(int j=0; j<max.y()*map_res_scaler; ++j) {
             
-            float a = i / scaler;
-            float b = j / scaler;
+            float a = i / double(map_res_scaler);
+            float b = j / double(map_res_scaler);
         
             geometry_msgs::Point32 point3d;
             //for evaluation
@@ -287,6 +278,7 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF()
             edf_field.points.push_back(point3dvis);
         
         }
+        cout << map_res_scaler << endl;
     } 
     
     return edf_field;

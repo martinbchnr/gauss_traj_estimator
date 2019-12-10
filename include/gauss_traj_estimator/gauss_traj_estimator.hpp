@@ -24,11 +24,13 @@
 #include "gp.hpp" // inherits gaussian.hpp-class
 #include "path_eval.hpp"
 
+typedef unsigned int uint;
+
 
 class GaussTrajEstimator {
 
   std::string node_name;
-  ros::NodeHandle node;
+  //ros::NodeHandle node;
 
   // Subscribers
   std::string target_pose_topic = "/target_pose";
@@ -92,42 +94,54 @@ class GaussTrajEstimator {
 
 
   struct GP_PARAMS {
-    double signal_var;
-    double length_scale;
-    double noise_var;        
+    double signal_var; // done
+    double length_scale; // done
+    double noise_var; // done
+    double start_t; // done
+    double end_t;  // done
+    int test_dim_path;  // done    
   };
 
   struct TRAINING_DATA_PARAMS {
-    X_x:  [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981],
-    X_y:  [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515],
-    X_z:  [],
-    t:    [0.0, 0.8, 3.0, 5.0, 7.0, 9.0],
-    uint dim;
-    uint num_samples;
+    std::vector<double> X_train_x; // done
+    std::vector<double> X_train_y; // done
+    std::vector<double> X_train_z; // done
+    std::vector<double> t_train;  // done
+    int dim; // done
+    int num_samples; // done
   };
 
   struct GAUSSIAN_PARAMS {
-    double norm_var;
-    double uniform_lower_bound;
-    double uniform_upper_bound;  
+    double norm_var; // done
+    double uniform_lower_bound; // not used yet
+    double uniform_upper_bound;   // not used yet
+    string sampling_mode; // not used yet
   };
 
   struct SAMPLING_PARAMS {
-    uint sampling_path_dim;
-    double start_t;
-    double end_t;
-    uint sample_count;    
+    int sample_count;    // done
   };
 
   struct PATH_COST_PARAMS {
-    double r_safe;
-    double ground_rejection_height;   
+    double r_safe; // done
+    double ground_rejection_height;  // don 
   };
 
   struct NODE_PARAMS {
-    string frame_id;
-    double run_freq;  
+    string frame_id; // done
+    double run_freq;  // done
+    int map_res_scaler; //done
+    string map_file; //done
   };
+
+ 
+
+  GP_PARAMS gp_params;
+	TRAINING_DATA_PARAMS training_data;
+	GAUSSIAN_PARAMS gaussian_params;
+	SAMPLING_PARAMS sampling_params;
+	PATH_COST_PARAMS path_cost_params;
+	NODE_PARAMS node_params;
   
 
   public:
@@ -137,6 +151,8 @@ class GaussTrajEstimator {
   void trainPosesCallback(const geometry_msgs::PoseArray msg);
   void trainTimesCallback(const gauss_traj_estimator::TrainTimes msg);
   
+  ros::NodeHandle node;
+
   // Message and communication methods
   void SubscribeTrainPoses();
   void SubscribeTrainTimes();
@@ -148,6 +164,8 @@ class GaussTrajEstimator {
   void PublishEDF();
   void spin();
   void GenerateEDF();
+  void ReceiveParams(const ros::NodeHandle& nh);
+
   
   // Conversion methods between ROS messages and Eigen data types
   std_msgs::Float32MultiArray EigenToRosSigmaArray(const Eigen::MatrixXd sigma_matrix);

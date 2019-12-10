@@ -29,7 +29,7 @@ public:
 
 
 	// Sample the distribution
-	Eigen::MatrixXd sample() const;
+	Eigen::MatrixXd sample(const double var) const;
 	MultiGaussian::normal_params approximate(Eigen::MatrixXd data, uint points) const;
 	Eigen::MatrixXd getMean() const;
 	Eigen::MatrixXd getCov() const;

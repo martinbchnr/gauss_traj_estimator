@@ -4,6 +4,7 @@
 <arg name="mav_name" default="neo11"/>
 <arg name="target_name" default="target"/>
 <arg name="world_name" default="map3"/>
+<arg name="format" default="bt"/> <!--bt=(octomap), vxblx=(voxblox) not implemented-->
 <arg name="bt_name" default="$(arg world_name)"/>
 
 	<!-- octomap server -->
@@ -39,6 +40,11 @@
     <node pkg="gauss_traj_estimator" type="gauss_traj_estimator" name="gauss_traj_estimator" output="screen">
         <param name="world_frame_id" value="/world" />
         <param name="target_frame_id" value="/target" />
+
+		<param name= "map_file_name" value = "$(find gauss_traj_estimator)/worlds/$(arg world_name).$(arg format)" />
+
+		<rosparam command="load" file="$(find gauss_traj_estimator)/params/params.yaml"/>		
+
 	</node>
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gauss_traj_estimator)/rviz/rviz.rviz"/>

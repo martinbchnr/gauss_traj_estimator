@@ -19,43 +19,93 @@ GaussTrajEstimator::~GaussTrajEstimator()
 }
 
 
-GaussTrajEstimator::ReceiveParams() 
+void GaussTrajEstimator::ReceiveParams(const ros::NodeHandle& nh)
 {
 	
-	GP_PARAMS gp_params;
-	TRAINING_DATA_PARAMS training_data;
-	GAUSSIAN_PARAMS gaussian_params;
-	SAMPLING_PARAMS sampling_params;
-	PATH_COST_PARAMS path_cost_params;
-	NODE_PARAMS node_params;
+	std::vector<double> target_waypoint_x;
+    std::vector<double> target_waypoint_y;
+	
+	nh.getParam(node_name + "training_data/x", training_data.X_train_x);
+	nh.getParam(node_name + "training_data/y", training_data.X_train_y);
 
-	node.param("training_data/X_x", training_data.X_train_x, [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981]);
-	node.param("training_data/X_y", training_data.X_train_y, [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515]);
-	node.param("training_data/X_z", training_data.X_train_z, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
-	
-	node.param("training_data/t",training_data.t_train, [0.0, 0.8, 3.0, 5.0, 7.0, 9.0]);
-	node.param("training_data/dim",,);
-	
-	node.param("training_data/num_samples", training_data.num_data_samples, 6);
+	// if no param available, this target waypoints are for map3.vxblx 
+    if (not nh.hasParam(node_name + "training_data/x")){
+        
+        training_data.X_train_x.push_back(0.0);
+        training_data.X_train_y.push_back(0.0);
+		training_data.X_train_z.push_back(0.0);
+		training_data.t_train.push_back(0.0);
 
-	node.param("gp_params/signal_var",gp_params.signal_var, 1.8);
-	node.param("gp_params/length_scale",gp_params.length_scale, 2.5);
-	node.param("gp_params/noise_var",gp_params.noise_var, 0.1);
-	
-	node.param("gaussian_params/norm_var", gaussian_params.norm_var, 3.0);
-	node.param("gaussian_params/uniform_lower_bound", gaussian_params.uniform_lower_bound, -2.0);
-	node.param("gaussian_params/uniform_upper_bound", gaussian_params.uniform_upper_bound, -2.0);
-	node.param("gaussian_params/sampling_mode", gaussian_params.sampling_mode, "gaussian");
-	node.param("sampling_params/sampling_path_dim", sampling_params.sampling_path_dim, 200);
-	node.param("sampling_params/start_t", sampling_params.start_t, 0.0);
-	node.param("sampling_params/end_t", sampling_params.end_t, 9.0);
-	node.param("sampling_params/sample_count", sampling_params.sample_count, 500);
-	
-	node.param("path_cost_params/r_safe", path_cost_params.r_safe, 1.4);
-	node.param("path_cost_params/ground_rejection_height", path_cost_params.ground_rejection_height, 0.7); 
-	node.param("node_params/frame_id", path_cost_params.frame_id, "/world");
-	node.param("node_params/run_freq", path_cost_params.run_freq,0.4);
+        training_data.X_train_x.push_back(2.0);
+        training_data.X_train_y.push_back(0.0);
+		training_data.X_train_z.push_back(0.0);
+		training_data.t_train.push_back(0.8);
 
+        training_data.X_train_x.push_back(3.4578);
+        training_data.X_train_y.push_back(4.1620);
+		training_data.X_train_z.push_back(0.0);	
+		training_data.t_train.push_back(3.0);
+
+        training_data.X_train_x.push_back(6.7478);
+        training_data.X_train_y.push_back(8.0200);
+		training_data.X_train_z.push_back(0.0);
+		training_data.t_train.push_back(5.0);
+
+        training_data.X_train_x.push_back(8.3223);
+        training_data.X_train_y.push_back(3.9896);
+		training_data.X_train_z.push_back(0.0);
+		training_data.t_train.push_back(7.0);
+
+        training_data.X_train_x.push_back(11.4981);
+        training_data.X_train_y.push_back(8.0515);
+		training_data.X_train_z.push_back(0.0);
+		training_data.t_train.push_back(9.0);
+ 
+    }
+
+	cout << "halloooo gröoeese" << endl;
+	cout << target_waypoint_x.size() << endl;
+
+	nh.getParam(node_name + "training_data/X_train_z", training_data.X_train_z);
+
+	
+	nh.getParam(node_name + "training_data/t_train", training_data.t_train);
+	
+	nh.param(node_name + "training_data/dim", training_data.dim, 2);
+	nh.param(node_name + "training_data/num_samples", training_data.num_samples, 6);
+
+	nh.param(node_name + "gp_params/signal_var",gp_params.signal_var, 1.8);
+	nh.param(node_name + "gp_params/length_scale",gp_params.length_scale, 2.5);
+	nh.param(node_name + "gp_params/noise_var",gp_params.noise_var, 0.1);
+	nh.param(node_name + "/gp_params/test_dim_path", gp_params.test_dim_path, 200);
+	nh.param(node_name + "/gp_params/start_t", gp_params.start_t, 0.0);
+	nh.param(node_name + "/gp_params/end_t", gp_params.end_t, 9.0);
+	
+	nh.param(node_name + "/gaussian_params/norm_var", gaussian_params.norm_var, 3.0);
+	nh.param(node_name + "/gaussian_params/uniform_lower_bound", gaussian_params.uniform_lower_bound, -2.0);
+	nh.param(node_name + "/gaussian_params/uniform_upper_bound", gaussian_params.uniform_upper_bound, -2.0);
+	nh.param(node_name + "/gaussian_params/sampling_mode", gaussian_params.sampling_mode, string("gaussian"));
+
+	nh.param(node_name + "/sampling_params/sample_count", sampling_params.sample_count, 500);
+	
+	
+	nh.param(node_name + "/path_cost_params/r_safe", path_cost_params.r_safe, 3.4);
+	nh.param(node_name + "/path_cost_params/ground_rejection_height", path_cost_params.ground_rejection_height, -10.0); 
+	nh.param(node_name + "/node_params/frame_id", node_params.frame_id, string("/world"));
+	nh.param(node_name + "/node_params/run_freq", node_params.run_freq, 0.4);
+		
+	nh.param(node_name + "/node_params/map_res_scaler", node_params.map_res_scaler, 10);
+
+	cout << path_cost_params.ground_rejection_height << endl;
+	cout << path_cost_params.r_safe << endl;
+
+	nh.param(node_name + "/node_params/map_file_name", node_params.map_file, string("/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt"));
+	
+	
+	//node.setParam("node_params.map_file_name", map_file);
+	//map_file = "/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+	
+	
 }
 
 // Store the current target position
@@ -244,14 +294,14 @@ nav_msgs::Path GaussTrajEstimator::EigenToRosPath(const Eigen::MatrixXd matrix)
 		single_pose.pose.position.x = matrix(i,0);
 		single_pose.pose.position.y = matrix(i,1);;
 		single_pose.pose.position.z = 0.0;
-		single_pose.header.frame_id = "/world";
+		single_pose.header.frame_id = node_params.frame_id;
 
 		pose_path.poses.push_back(single_pose);
 
 	}
 
 	pose_path.header.stamp = ros::Time::now();
-	pose_path.header.frame_id = "/world";
+	pose_path.header.frame_id = node_params.frame_id;
 
 	return pose_path;
 }
@@ -270,7 +320,7 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosMarkerArray(const 
 		m.pose.position.y = matrix(i,1);;
 		m.pose.position.z = 0.0;
 		m.pose.orientation.w = 1.0;
-		m.header.frame_id = "/world";
+		m.header.frame_id = node_params.frame_id;
 		m.scale.x = 0.25;
 		m.scale.y = 0.25;
 		m.scale.z = 0.25;
@@ -308,7 +358,7 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 			one_path.points.push_back(point);
 		}
 		
-		one_path.header.frame_id = "/world";
+		one_path.header.frame_id = node_params.frame_id;
 		one_path.scale.x = 0.08; // only scale x is used
 		one_path.color.r = 0.15;
 		one_path.color.g = 0.47;
@@ -347,7 +397,7 @@ visualization_msgs::MarkerArray GaussTrajEstimator::EigenToRosSampledPathsMarker
 			one_path.points.push_back(point);
 		}
 		
-		one_path.header.frame_id = "/world";
+		one_path.header.frame_id = node_params.frame_id;
 		one_path.scale.x = 0.03; // only scale x is used
 		one_path.color.b = 0.4;
 		one_path.color.r = 0.4;
@@ -417,11 +467,19 @@ void GaussTrajEstimator::spin() {
 
 	bool first_run = true;
 
-    ros::Rate r(0.4);
+
+	//node.param("map_file_name", map_file, string("/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt"));
+	//node.setParam("node_params.map_file_name", map_file);
+	//map_file = "/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt";
+
+
+    ros::Rate r(node_params.run_freq);
     while(ros::ok()) {
         ros::spinOnce();
 		bool lost_track = true;
         if(lost_track) {
+
+			cout << "entered looping" << endl;
 
 			// Create train location data
 			Eigen::MatrixXd X_train_x(5,1);
@@ -438,15 +496,53 @@ void GaussTrajEstimator::spin() {
 						1.5,
 						4.5;
 
-			Eigen::MatrixXd X_train(6,2);
+			// Convert std double array to Eigen array
+
+			// initialize data containers
+			Eigen::MatrixXd X_train(training_data.num_samples,training_data.dim);
+			Eigen::VectorXd t_train(training_data.num_samples);
+
+			cout << "created data containers" << endl;
+
+			// fill data containers with provided training data
+			for (int i=0; i < training_data.num_samples; ++i) {
+				cout << "created datasdfasdfa containers" << endl;
+				if(training_data.dim == 2) {
+					cout << "cresdfaated data containers" << endl;
+					X_train(i,0) = training_data.X_train_x.at(i);
+					X_train(i,1) = training_data.X_train_y.at(i);
+					t_train(i) = training_data.t_train.at(i);
+
+					cout << X_train << endl;
+					cout << t_train << endl;
+				}
+				else if (training_data.dim == 3) {
+					cout << "created data asdfasdfcontainers" << endl;
+					X_train(i,0) = training_data.X_train_x.at(i);
+					X_train(i,1) = training_data.X_train_y.at(i);
+					X_train(i,2) = training_data.X_train_z.at(i);
+					t_train(i) = training_data.t_train.at(i);
+				}
+				else {
+					cout << "Implement a specific dimensionality of your preference" << endl;
+				}
+				
+			}
+
+			cout << "added data to containers" << endl;
+
+			/* 
 			X_train  << 0.0, 0.0,
 						2.0, 0.0,
 						3.4578,4.1620,  
 						6.7478, 8.0200,
 						8.3223, 3.9896,
 						11.4981, 8.0515;
+ */
+
 
 			// Create train time data
+			/* 
 			Eigen::VectorXd t_train(6);
 			t_train << 	0.0,
 						0.8, 
@@ -454,21 +550,27 @@ void GaussTrajEstimator::spin() {
 						5.0,
 						7.0,
 						9.0;
-
+ */
 
 			// epsilon follow up method:
 			// use real-time velocity/orientation vector of the target  
 
 			Eigen::VectorXd t_test;
-			t_test.setLinSpaced(200,0.0,t_train(t_train.rows()-1));
+			t_test.setLinSpaced(gp_params.test_dim_path,gp_params.start_t,gp_params.end_t);
+
+			cout << "created t_test vector" << endl;
 
 			// Initialize Gaussian process with these parameters
 			// {signal var, length scale, noise var}
-			GP gp_debug {1.8, 2.5, 0.1}; // working: {1.8, 2.5, 0.1} default: {g=1, l=10, 0.01} 
+			GP gp_debug {gp_params.signal_var, gp_params.length_scale, gp_params.noise_var}; // working: {1.8, 2.5, 0.1} default: {g=1, l=10, 0.01} 
+
+			cout << "initialized gp" << endl;
 
 			// Run the mean and covariance computation using the provided test and training data
 			Eigen::MatrixXd mu_debug = gp_debug.pred_mean(X_train, t_train, t_test);
 			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
+
+			cout << "predicted mu and var" << endl;
 			
 			// Console output of computations to check validity
 			//cout << "----- GaussTrajEstimator: debug output -----" << endl;
@@ -491,7 +593,7 @@ void GaussTrajEstimator::spin() {
 			// Use derived mean and sigma data to sample multiple new paths
 			MultiGaussian gaussian_debug(mu_debug,sigma_debug);
     		
-
+			cout << "init gaussina debug" << endl;
 
 			/*
 			// Option A: Only one sample at a time: 	
@@ -516,8 +618,11 @@ void GaussTrajEstimator::spin() {
 			
 			 
 			//PathEvaluator path_cost_eval;
+			path_cost_eval.setParams(node_params.map_file, path_cost_params.r_safe, path_cost_params.ground_rejection_height);
 
-			uint sample_count = 500;
+			cout << "tried to set up path_cost_eval with params" << endl;
+
+			uint sample_count = sampling_params.sample_count;
 			uint sample_dim = mu_debug.rows();
 
 			Eigen::MatrixXd path_costs(sample_count, 1);
@@ -531,12 +636,13 @@ void GaussTrajEstimator::spin() {
 			// Go through sampled paths and evaluate cost
 			for (uint i = 0; i < sample_count; i++)
 			{
-				sampled_sample = gaussian_debug.sample();
+				sampled_sample = gaussian_debug.sample(gaussian_params.norm_var);
 				entire_sampled_data.block(i*sample_dim,0,sample_dim,mu_debug.cols()) = sampled_sample; // <-- syntax is the same for vertical and horizontal concatenation
 				
 				PathEvaluator::eval_info result;
     			result = path_cost_eval.cost_of_path(sampled_sample);
 				path_costs(i) = result.cost;
+
 
 				if (result.rej == false) {
 					
@@ -822,11 +928,14 @@ void GaussTrajEstimator::GenerateEDF() {
 	
 	// Generate one instance of the PathEvaluator class to compute the distance field for plotting
 	PathEvaluator edf_plot;
+	edf_plot.setParams(node_params.map_file, path_cost_params.r_safe, path_cost_params.ground_rejection_height);
 	
+	cout << "edf_plot params set" << endl;
+
 	// Give activity notice and compute the distance field after import of the octomap file
 	edf_plot.talk();
 
-	
+	cout << "edf plot talked" << endl;
 
 	// Use some condition to only publish the discretized EDF plot
 	// when a certain condition is satisfied (e.g change in the environment
@@ -834,15 +943,20 @@ void GaussTrajEstimator::GenerateEDF() {
 			
 	ros::Duration(2.0).sleep();
 
-	edf_plot.load_map();
+
+	edf_plot.load_map(node_params.map_res_scaler, node_params.map_file);
+
+	cout << "edf plot loaded map" << endl;
+
 	// compute the discretized Euclidean distance field for plotting and publish it
 	sensor_msgs::PointCloud computed_edf_field;
-	computed_edf_field = edf_plot.ComputeEDF();
+	computed_edf_field = edf_plot.ComputeEDF(node_params.map_res_scaler, node_params.frame_id, node_params.map_file);
+	
 
 	edf_field_pub.publish(computed_edf_field);
 
 	// also load the map for the path evaluator
-	path_cost_eval.load_map();
+	path_cost_eval.load_map(node_params.map_res_scaler, node_params.map_file);
 
 }
 
@@ -862,6 +976,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "gauss_traj_estimator");
     GaussTrajEstimator gaussian_traj_estimator;
 
+	gaussian_traj_estimator.ReceiveParams(gaussian_traj_estimator.node); 
+	cout << "params received" << endl;
 	gaussian_traj_estimator.SubscribeTrainPoses();
     gaussian_traj_estimator.SubscribeTrainTimes();
     gaussian_traj_estimator.SubscribeTargetPose();
@@ -870,6 +986,8 @@ int main(int argc, char **argv)
 	gaussian_traj_estimator.PublishSampledData();
 	gaussian_traj_estimator.PublishValidData();
 	gaussian_traj_estimator.PublishEDF();
+
+
 
 	
 	

@@ -50,7 +50,7 @@ double MultiGaussian::pdf(const Eigen::VectorXd& x) const
 
 
 // Sample single samples from the distribution defined using mu and sigma
-Eigen::MatrixXd MultiGaussian::sample() const 
+Eigen::MatrixXd MultiGaussian::sample(const double var) const 
 {
     // Use Cholesky decomposition to find upper and lower triagonal matrix of sigma
     Eigen::MatrixXd L = sigma.llt().matrixL();
@@ -62,7 +62,7 @@ Eigen::MatrixXd MultiGaussian::sample() const
     
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<> N{0,3};
+    std::normal_distribution<> N{0,var};
     std::uniform_real_distribution<> dis(-2.0, 2.0);
 
     //cout << "initialized random machine" << endl;
@@ -201,7 +201,7 @@ int test_gaussian() {
     Eigen::VectorXd vector(2);
     for (unsigned i = 0; i < points; i++)
     {
-        vector = test_gaussian_sample.sample();
+        vector = test_gaussian_sample.sample(3.0);
         x_sample(0, i) = vector(0);
         x_sample(1, i) = vector(1);
     }
