@@ -43,7 +43,7 @@
 
 		<param name= "map_file_name" value = "$(find gauss_traj_estimator)/worlds/$(arg world_name).$(arg format)" />
 
-		<rosparam command="load" file="$(find gauss_traj_estimator)/params/params.yaml"/>		
+		<rosparam command="load" file="$(find gauss_traj_estimator)/params/params_local.yaml"/>		
 
 	</node>
 

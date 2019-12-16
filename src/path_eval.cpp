@@ -52,13 +52,13 @@ void PathEvaluator::load_map(const uint map_res_scaler, const string filepath)
     
     tree_ptr->getMetricMin(x,y,z);
     octomap::point3d min(x,y,z); 
-    cout << "Metric min: " << x << "," << y << "," << z << endl;
+    //cout << "Metric min: " << x << "," << y << "," << z << endl;
     
     min.z() = ground_rejection_height;
     
     tree_ptr->getMetricMax(x,y,z);
     octomap::point3d max(x,y,z); 
-    cout << "Metric max: " << x << "," << y << "," << z << endl;
+    //cout << "Metric max: " << x << "," << y << "," << z << endl;
 
     dx = tree_ptr->getResolution();
     
@@ -93,9 +93,9 @@ void PathEvaluator::load_map(const uint map_res_scaler, const string filepath)
 
     edf_ptr->getDistanceAndClosestObstacle(p, distance, closestObst);
 
-    std::cout<<"\n\ndistance at point "<<p.x()<<","<<p.y()<<","<<p.z()<<" is "<<distance<<std::endl;
+    //std::cout<<"\n\ndistance at point "<<p.x()<<","<<p.y()<<","<<p.z()<<" is "<<distance<<std::endl;
     if(distance < edf_ptr->getMaxDist())
-    std::cout<<"closest obstacle to "<<p.x()<<","<<p.y()<<","<<p.z()<<" is at "<<closestObst.x()<<","<<closestObst.y()<<","<<closestObst.z()<<std::endl;
+    //std::cout<<"closest obstacle to "<<p.x()<<","<<p.y()<<","<<p.z()<<" is at "<<closestObst.x()<<","<<closestObst.y()<<","<<closestObst.z()<<std::endl;
 
 
     // flag 
@@ -278,7 +278,6 @@ sensor_msgs::PointCloud PathEvaluator::ComputeEDF(const int map_res_scaler, cons
             edf_field.points.push_back(point3dvis);
         
         }
-        cout << map_res_scaler << endl;
     } 
     
     return edf_field;

@@ -22,11 +22,12 @@ GaussTrajEstimator::~GaussTrajEstimator()
 void GaussTrajEstimator::ReceiveParams(const ros::NodeHandle& nh)
 {
 	
-	std::vector<double> target_waypoint_x;
-    std::vector<double> target_waypoint_y;
+	//std::vector<double> target_waypoint_x;
+    //std::vector<double> target_waypoint_y;
 	
 	nh.getParam(node_name + "training_data/x", training_data.X_train_x);
 	nh.getParam(node_name + "training_data/y", training_data.X_train_y);
+	nh.getParam(node_name + "training_data/z", training_data.X_train_z);
 
 	// if no param available, this target waypoints are for map3.vxblx 
     if (not nh.hasParam(node_name + "training_data/x")){
@@ -63,8 +64,6 @@ void GaussTrajEstimator::ReceiveParams(const ros::NodeHandle& nh)
  
     }
 
-	cout << "halloooo gröoeese" << endl;
-	cout << target_waypoint_x.size() << endl;
 
 	nh.getParam(node_name + "training_data/X_train_z", training_data.X_train_z);
 
@@ -95,9 +94,6 @@ void GaussTrajEstimator::ReceiveParams(const ros::NodeHandle& nh)
 	nh.param(node_name + "/node_params/run_freq", node_params.run_freq, 0.4);
 		
 	nh.param(node_name + "/node_params/map_res_scaler", node_params.map_res_scaler, 10);
-
-	cout << path_cost_params.ground_rejection_height << endl;
-	cout << path_cost_params.r_safe << endl;
 
 	nh.param(node_name + "/node_params/map_file_name", node_params.map_file, string("/home/martin/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt"));
 	
@@ -513,8 +509,8 @@ void GaussTrajEstimator::spin() {
 					X_train(i,1) = training_data.X_train_y.at(i);
 					t_train(i) = training_data.t_train.at(i);
 
-					cout << X_train << endl;
-					cout << t_train << endl;
+					//cout << X_train << endl;
+					//cout << t_train << endl;
 				}
 				else if (training_data.dim == 3) {
 					cout << "created data asdfasdfcontainers" << endl;
@@ -571,6 +567,62 @@ void GaussTrajEstimator::spin() {
 			Eigen::MatrixXd sigma_debug = gp_debug.pred_var(t_train, t_test);
 
 			cout << "predicted mu and var" << endl;
+
+			/* 
+			// trying se(3) GP using the defined method
+
+			//Eigen::MatrixXd T_0_lie(4,4);
+			//Eigen::MatrixXd T_1_lie(4,4);
+
+			Eigen::MatrixXd T_lie(2,16);
+
+			T_lie << 	1,0,0,1,0,1,0,1,0,0,1,1,0,0,0,1,
+						1,0,0,2,0,1,0,2,0,0,1,2,0,0,0,1;
+
+ 
+			T_0_lie << 	1,0,0,1,
+						0,1,0,1,
+						0,0,1,1,
+						0,0,0,1;
+			
+			T_1_lie << 	1,0,0,2,
+						0,1,0,2,
+						0,0,1,2,
+						0,0,0,1;
+
+
+			Eigen::VectorXd t_lie_train(2);
+			t_lie_train << 0,1;
+
+			Eigen::VectorXd t_lie_test;
+			t_lie_test.setLinSpaced(10,0,1);
+
+			cout << "MU RESULTS LIE FORMULATION" << endl;
+			cout << T_lie << endl;
+			cout << t_lie_test << endl;
+
+
+			Eigen::MatrixXd mu_lie = gp_debug.pred_mean(T_lie,t_lie_train, t_lie_test);
+
+			Eigen::MatrixXd mu_lie_resize = mu_lie;
+			mu_lie_resize.resize(40,4);
+
+
+			cout << "MU RESULTS LIE FORMULATION" << endl;
+
+			cout << "MU RESULTS LIE FORMULATION" << endl;
+
+			cout << "MU RESULTS LIE FORMULATION" << endl;
+
+			cout << "MU RESULTS LIE FORMULATION" << endl;
+			cout << mu_lie_resize << endl;
+
+ 			*/
+
+
+
+
+
 			
 			// Console output of computations to check validity
 			//cout << "----- GaussTrajEstimator: debug output -----" << endl;
@@ -593,7 +645,6 @@ void GaussTrajEstimator::spin() {
 			// Use derived mean and sigma data to sample multiple new paths
 			MultiGaussian gaussian_debug(mu_debug,sigma_debug);
     		
-			cout << "init gaussina debug" << endl;
 
 			/*
 			// Option A: Only one sample at a time: 	
@@ -619,8 +670,6 @@ void GaussTrajEstimator::spin() {
 			 
 			//PathEvaluator path_cost_eval;
 			path_cost_eval.setParams(node_params.map_file, path_cost_params.r_safe, path_cost_params.ground_rejection_height);
-
-			cout << "tried to set up path_cost_eval with params" << endl;
 
 			uint sample_count = sampling_params.sample_count;
 			uint sample_dim = mu_debug.rows();
@@ -833,7 +882,7 @@ void GaussTrajEstimator::spin() {
 				//approx_sigma = approx_sigma / static_cast<double>(points);
 				//approx_sigma = approx_sigma - approx_mean * approx_mean.transpose();
 
-				cout<< approx_mean << endl;
+				//cout<< approx_mean << endl;
 				//cout<< approx_sigma << endl;
 
 				mean_path(j,0) = approx_mean(0,0);

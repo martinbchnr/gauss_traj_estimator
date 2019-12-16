@@ -1,0 +1,38 @@
+gp_params: {signal_var: 1.8,
+            length_scale: 2.5,
+            noise_var: 0.1,
+            test_dim_path: 200,
+            start_t: 0.0,
+            end_t: 9.0
+            }
+
+training_data: {x:  [0.0, 2.0, 3.4578, 6.7478, 8.3223, 11.4981],
+                y:  [0.0, 0.0, 4.1620, 8.0200, 3.9896, 8.0515],
+                z:  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                t_train:    [0.0, 0.8, 3.0, 5.0, 7.0, 9.0],
+                dim: 2,
+                num_samples:  6 
+                }
+
+gaussian_params: {norm_var: 3,
+                  uniform_lower_bound: -2.0,
+                  uniform_upper_bound: 2.0
+                  }
+
+sampling_params: {
+                  sample_count: 500,
+                  sampling_mode: "gaussian"
+                  }
+
+path_cost_params: {r_safe: 3.4,
+                  ground_rejection_height: -10.0
+                  }
+
+node_params: {frame_id: "/world",
+              map_res_scaler: 10,
+              run_freq: 0.4,
+              map_file_name: "/home/martinbuechner/catkin_ws/src/gauss_traj_estimator/worlds/map3.bt"
+              }
+
+
+
